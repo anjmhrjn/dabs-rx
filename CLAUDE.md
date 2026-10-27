@@ -131,7 +131,7 @@ Add benign confounders so the problem is not trivial:
 Labels (`user_id`, `pattern`, `start_date`) go to `data/labels/` locally and to `injected_labels` in the `eval` schema. Nowhere else.
 
 ### Data scale (Free Edition safe)
-- About 120 nurses, 8 cabinets, about 3,000 admissions over 180 days. Target 250k to 400k ADC events total.
+- About 120 nurses, 8 cabinets, about 3,000 admissions over 180 days. Target 150k to 250k ADC events total. (Lowered from 250k to 400k in CP2: with realistic per-patient rates, about 5 controlled pulls per patient-day, a blind count on every controlled access, and typical length of stay, 3,000 admissions give about 186k events.)
 - The simulator writes **one file per day per source** so Auto Loader ingestion is incremental. Upload days 1 to 150 first, then 151 to 180 to demonstrate incremental loads.
 - Deterministic: a fixed seed in `generator/config.yaml` reproduces identical output.
 

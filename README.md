@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 1 (reference data). The bundle defines the Unity Catalog schemas and the landing volume, and the local generator builds the formulary and shortage files. The simulator, pipeline, scoring, and dashboard come in later checkpoints.
+Checkpoint 2 (simulator). The bundle defines the Unity Catalog schemas and the landing volume. The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. The pipeline, scoring, and dashboard come in later checkpoints.
 
 ## Layout
 
@@ -42,6 +42,54 @@ uv run python -m generator.build_formulary   # offline: formulary.csv and shorta
 
 The formulary has 20 controlled substances across Schedules II to V, defined in `generator/config.yaml`. For each item, the build picks one NDC from openFDA. It prefers a package with a NADAC generic price, then any NADAC price, then the lowest NDC. Items with no NADAC price get a seeded fallback cost and `cost_source = 'fallback'`. NADAC is an outpatient retail benchmark, so costs are an estimate of hospital acquisition cost, not a contract price. Both sources update weekly, so a later fetch can pick different NDCs or costs. `data/reference/manifest.json` records the fetch date and NADAC dataset used.
 
+## Synthetic data
+
+`generator/simulate.py` builds a synthetic two-hospital system and writes what its systems would send to the lakehouse. Every patient, staff member, and cabinet event is made up. Settings are in the `simulation` section of `generator/config.yaml`, and a fixed seed gives the same files every run.
+
+| | |
+|---|---|
+| Facilities | `MAIN` (Med/Surg A, Med/Surg B, ED) and `COMM` (Med/Surg A, Behavioral Health) |
+| Cabinets | 8 automated dispensing cabinets, 1 or 2 per unit |
+| Staff | 120 nurses with a home unit and a day or night shift, 10 of whom transfer once. Also 6 pharmacists and 6 pharmacy techs. |
+| Volume | About 3,000 admissions and 186,000 cabinet events over 180 days (2026-03-01 to 2026-08-27) |
+
+Each source is written as one CSV per day under `data/landing/<source>/`, so files can be loaded a day at a time:
+
+| Source | What it holds |
+|---|---|
+| `adc_events` | Cabinet transactions: `PULL`, `OVERRIDE`, `WASTE`, `RETURN`, `CANCEL`, `RESTOCK`, `COUNT`, `DISCREPANCY_RESOLVED` |
+| `adt_events` | Admit, transfer, and discharge events |
+| `order_events` | Controlled substance orders: new, pharmacist verified, discontinued |
+| `staff_assignments` | Each staff member's unit and shift. Day 1 has everyone; later files hold only transfers. |
+
+Timestamps are local facility time with no time zone. Static tables (`units.csv`, `cabinets.csv`, `cabinet_par.csv`, `dispense_units.csv`) go to `data/reference/`.
+
+**Diversion-like patterns.** About 3% of nurses (4 of 120) get one or two injected patterns starting partway through the window:
+- high waste ratio
+- unwitnessed waste
+- the same witness on most wastes
+- long delay between pull and waste
+- pulls with no order on file
+- pulls after the patient was discharged or transferred
+- a high pull-then-cancel rate
+
+The answer key is in `data/labels/` and is read only by the evaluation step.
+
+**Benign differences that are not diversion:**
+- ED nurses override and waste far more often, because ED doses are often given before pharmacist verification and come from vials.
+- Night shift has more PRN volume.
+- Four high-acuity nurses pull about 1.7 times the median while keeping normal ratios.
+- Every flag has a small base rate for everyone.
+
+A screening method has to compare nurses with their peers to get past these.
+
+**Bad rows.** 0.5% of cabinet rows are deliberately broken, each with one defect: a missing user or cabinet, a negative quantity, a timestamp outside the window, an unknown NDC, or an unknown cabinet. These exercise the pipeline's data quality checks. Counts per defect are in `data/sim_manifest.json`.
+
+```bash
+uv run python -m generator.simulate            # full 180 days into data/
+uv run python -m generator.simulate --days 14  # quick look
+```
+
 ## Commands
 
 ```bash
@@ -49,6 +97,7 @@ uv sync
 uv run pytest
 uv run python -m generator.fetch_reference
 uv run python -m generator.build_formulary
+uv run python -m generator.simulate
 databricks bundle validate -t dev --profile <profile>
 databricks bundle deploy -t dev --profile <profile>
 ```
