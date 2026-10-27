@@ -18,7 +18,11 @@ PATTERNS = list(CONFIG["simulation"]["injection"]["patterns"])
 
 def fake_formulary() -> dict[str, dict[str, str]]:
     return {
-        item["drug_key"]: {"drug_key": item["drug_key"], "ndc": f"{i + 1:011d}", "dea_schedule": item["expected_schedule"]}
+        item["drug_key"]: {
+            "drug_key": item["drug_key"],
+            "ndc": f"{i + 1:011d}",
+            "dea_schedule": item["expected_schedule"],
+        }
         for i, item in enumerate(CONFIG["reference"]["formulary"])
     }
 
@@ -135,7 +139,16 @@ def test_clean_rows_reference_known_ids(full: SimOutput) -> None:
         if not clean:
             bad += 1
             continue
-        assert r["event_type"] in {"PULL", "WASTE", "RETURN", "CANCEL", "OVERRIDE", "RESTOCK", "COUNT", "DISCREPANCY_RESOLVED"}
+        assert r["event_type"] in {
+            "PULL",
+            "WASTE",
+            "RETURN",
+            "CANCEL",
+            "OVERRIDE",
+            "RESTOCK",
+            "COUNT",
+            "DISCREPANCY_RESOLVED",
+        }
         if r["event_type"] in ("WASTE", "CANCEL", "RETURN"):
             parent = by_id[r["related_event_id"]]
             assert parent["event_type"] in ("PULL", "OVERRIDE")
@@ -172,5 +185,7 @@ def test_adt_and_orders_cover_every_admission(small_files: Path) -> None:
     admitted = {r["admission_id"] for r in adt if r["event_type"] == "ADMIT"}
     assert {r["admission_id"] for r in adt} == admitted
     assert {r["admission_id"] for r in orders} <= admitted
-    pulls = [r for r in read(small_files, "adc_events") if r["event_type"] in ("PULL", "OVERRIDE") and r["admission_id"]]
+    pulls = [
+        r for r in read(small_files, "adc_events") if r["event_type"] in ("PULL", "OVERRIDE") and r["admission_id"]
+    ]
     assert {r["admission_id"] for r in pulls} <= admitted
