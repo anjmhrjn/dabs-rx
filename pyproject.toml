@@ -1,0 +1,23 @@
+[project]
+name = "dabs-rx"
+version = "0.0.1"
+description = "Controlled substance surveillance lakehouse on synthetic data (Databricks Asset Bundle)."
+authors = [{ name = "anjmhrjn1@gmail.com" }]
+requires-python = ">=3.11,<3.12"
+dependencies = []
+
+[dependency-groups]
+dev = [
+    "pytest",
+    "ruff",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
