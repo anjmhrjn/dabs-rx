@@ -6,14 +6,14 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 2 (simulator). The bundle defines the Unity Catalog schemas and the landing volume. The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. The pipeline, scoring, and dashboard come in later checkpoints.
+Checkpoint 3 (bronze). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded into bronze tables by the pipeline. Silver, gold, scoring, and the dashboard come in later checkpoints.
 
 ## Layout
 
 | Path | Purpose |
 |---|---|
 | `databricks.yml` | Bundle root, `catalog` variable, `dev` and `prod` targets |
-| `resources/` | Schemas, landing volume, and later the pipeline, job, and dashboard |
+| `resources/` | Schemas, landing volume, pipeline, job, and later the dashboard |
 | `generator/` | Local scripts that build the synthetic data and reference files |
 | `src/` | Pipeline, scoring, snapshot, and evaluation code |
 | `sql/governance/` | Column masks, row filters, and reporting views |
@@ -89,6 +89,24 @@ A screening method has to compare nurses with their peers to get past these.
 uv run python -m generator.simulate            # full 180 days into data/
 uv run python -m generator.simulate --days 14  # quick look
 ```
+
+## Load to Databricks
+
+`generator/upload.sh <first_day> <last_day>` copies the simulated daily files for that day range, plus the reference files, into the bundle's landing volume. Days are numbered from 1, starting 2026-03-01. The script reads the volume path from the bundle, so it works for either target. It never uploads `data/labels/` and never overwrites a daily file that is already there.
+
+```bash
+databricks bundle deploy -t dev
+DATABRICKS_CONFIG_PROFILE=<profile> generator/upload.sh 1 150    # first load
+databricks bundle run rx_job -t dev
+DATABRICKS_CONFIG_PROFILE=<profile> generator/upload.sh 151 180  # later, incremental load
+databricks bundle run rx_job -t dev
+```
+
+The pipeline (`resources/pipeline.yml`) runs on serverless compute. Its bronze layer (`src/pipeline/bronze.py`) has two kinds of tables:
+- **Streaming tables** for the four daily feeds, read with Auto Loader. Each run reads only files it has not seen before.
+- **Batch tables** (`ref_*`) for the reference files.
+
+Bronze keeps every source column as text. It adds `_ingested_at` and `_source_file`, and Auto Loader adds `_rescued_data`. Values are checked and typed in silver.
 
 ## Commands
 
