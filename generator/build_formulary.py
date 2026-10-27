@@ -6,14 +6,12 @@ Writes data/reference/formulary.csv and data/reference/shortages.csv.
 Run: uv run python -m generator.build_formulary
 """
 
-import csv
 import json
 import random
 from collections import Counter
-from pathlib import Path
 from typing import Any
 
-from generator.common import REFERENCE_DIR, load_config
+from generator.common import REFERENCE_DIR, load_config, write_csv
 
 FORMULARY_COLUMNS = [
     "drug_key",
@@ -220,13 +218,6 @@ def build_formulary_rows(
     return rows
 
 
-def _write_csv(path: Path, columns: list[str], rows: list[dict[str, Any]]) -> None:
-    with path.open("w", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=columns)
-        writer.writeheader()
-        writer.writerows(rows)
-
-
 def main() -> None:
     cfg = load_config()["reference"]
     ndc_dir = REFERENCE_DIR / "openfda_ndc"
@@ -239,8 +230,8 @@ def main() -> None:
     short_keys = {s["drug_key"] for s in shortages if s["drug_key"] and s["status"] == "Current"}
 
     rows = build_formulary_rows(cfg, products_by_key, nadac, short_keys)
-    _write_csv(REFERENCE_DIR / "formulary.csv", FORMULARY_COLUMNS, rows)
-    _write_csv(REFERENCE_DIR / "shortages.csv", SHORTAGE_COLUMNS, shortages)
+    write_csv(REFERENCE_DIR / "formulary.csv", FORMULARY_COLUMNS, rows)
+    write_csv(REFERENCE_DIR / "shortages.csv", SHORTAGE_COLUMNS, shortages)
 
     print(f"formulary.csv: {len(rows)} rows")
     print("  by schedule:", dict(sorted(Counter(r["dea_schedule"] for r in rows).items())))
