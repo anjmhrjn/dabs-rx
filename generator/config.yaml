@@ -283,3 +283,195 @@ reference:
       therapeutic_class: anticonvulsant
       psych_relevant: false
       shortage_names: [Pregabalin Capsule]
+
+simulation:
+  # Every value below drives synthetic data only. Changing the seed changes every output file.
+  seed: 4242
+  start_date: "2026-03-01"
+  days: 180
+
+  shifts:
+    day: { start_hour: 7 }
+    night: { start_hour: 19 }
+  shift_hours: 12
+  # Use multiplier for PRN doses during the night shift.
+  night_prn_mult: 1.1
+
+  facilities:
+    MAIN: { name: Main Hospital }
+    COMM: { name: Community Hospital }
+
+  # kind picks the order and drug mix (unit_kinds below).
+  units:
+    - { unit_id: MAIN-MSA, facility_id: MAIN, name: Med/Surg A, kind: MS, cabinets: 2, nurses: 30 }
+    - { unit_id: MAIN-MSB, facility_id: MAIN, name: Med/Surg B, kind: MS, cabinets: 1, nurses: 22 }
+    - { unit_id: MAIN-ED, facility_id: MAIN, name: Emergency Department, kind: ED, cabinets: 2, nurses: 18 }
+    - { unit_id: COMM-MSA, facility_id: COMM, name: Med/Surg A, kind: MS, cabinets: 1, nurses: 22 }
+    - { unit_id: COMM-BH, facility_id: COMM, name: Behavioral Health, kind: BH, cabinets: 2, nurses: 28 }
+
+  # Pharmacy staff per facility. They verify orders, restock, and resolve discrepancies. Not scored.
+  pharmacists_per_facility: 3
+  techs_per_facility: 3
+
+  staffing:
+    min_nurses_per_shift: 2
+    # Share of RNs who transfer unit or shift once during the window (SCD2 changes).
+    transfer_rate: 0.08
+    transfer_day_range: [20, 160]
+    high_acuity_nurses: 4
+    # High-acuity nurses take more patients, and their patients use more PRN doses.
+    high_acuity_assignment_weight: 1.6
+    high_acuity_use_mult: 1.3
+
+  # Daily arrivals by entry point. ED visits may continue to a Med/Surg unit.
+  arrivals:
+    - { unit_id: MAIN-ED, per_day: 9.0 }
+    - { unit_id: MAIN-MSA, per_day: 2.0 }
+    - { unit_id: MAIN-MSB, per_day: 1.5 }
+    - { unit_id: COMM-MSA, per_day: 2.5 }
+    - { unit_id: COMM-BH, per_day: 1.7 }
+  ed_admit_rate: 0.35
+  ed_admit_units: { MAIN-MSA: 0.6, MAIN-MSB: 0.4 }
+  readmission_rate: 0.05
+
+  unit_kinds:
+    ED:
+      nurse_ratio: 4
+      los_hours: [4, 16]
+      orders_per_stay: { 0: 0.20, 1: 0.40, 2: 0.28, 3: 0.12 }
+      order_start_lag_min: [0, 30]
+      verify_lag_min_median: 25
+      # First doses in the ED are often given before pharmacist verification (legitimate override).
+      first_dose_before_verify: 0.6
+      prn_use_mult: 1.3
+      drugs:
+        morphine_inj_4mg_ml: 3
+        hydromorphone_inj_1mg_ml: 3
+        fentanyl_inj_50mcg_ml: 2
+        lorazepam_inj_2mg_ml: 2
+        midazolam_inj_1mg_ml: 1
+        ketamine_inj_50mg_ml: 1
+        oxycodone_tab_5mg: 1
+        hydrocodone_apap_tab_5_325: 1
+        diazepam_inj_5mg_ml: 0.5
+    MS:
+      nurse_ratio: 5
+      los_hours: [48, 240]
+      orders_per_stay: { 0: 0.10, 1: 0.30, 2: 0.38, 3: 0.22 }
+      order_start_lag_min: [0, 180]
+      verify_lag_min_median: 35
+      first_dose_before_verify: 0.03
+      prn_use_mult: 1.0
+      drugs:
+        oxycodone_tab_5mg: 4
+        hydrocodone_apap_tab_5_325: 3
+        hydromorphone_inj_1mg_ml: 2.5
+        morphine_inj_4mg_ml: 2
+        tramadol_tab_50mg: 2
+        zolpidem_tab_5mg: 1.5
+        morphine_ir_tab_15mg: 1
+        pregabalin_cap_75mg: 1
+        lorazepam_tab_1mg: 0.7
+        alprazolam_tab_0_25mg: 0.5
+        diazepam_tab_5mg: 0.3
+    BH:
+      nurse_ratio: 6
+      los_hours: [144, 432]
+      orders_per_stay: { 0: 0.08, 1: 0.27, 2: 0.40, 3: 0.25 }
+      order_start_lag_min: [0, 240]
+      verify_lag_min_median: 45
+      first_dose_before_verify: 0.02
+      prn_use_mult: 1.0
+      drugs:
+        lorazepam_tab_1mg: 3
+        clonazepam_tab_0_5mg: 2.5
+        diazepam_tab_5mg: 1.5
+        buprenorphine_sl_tab_8mg: 1.5
+        zolpidem_tab_5mg: 1.5
+        alprazolam_tab_0_25mg: 1
+        lorazepam_inj_2mg_ml: 1
+        phenobarbital_inj_65mg_ml: 1
+        methylphenidate_tab_10mg: 0.5
+        pregabalin_cap_75mg: 0.5
+
+  # How each formulary item is dispensed and dosed.
+  #   unit_of_issue   what one ADC unit is (TAB, CAP, VIAL, CARTRIDGE)
+  #   mg_per_unit     drug amount in one unit of issue (vial mg = mg/mL x volume)
+  #   unit_volume_ml  injectables only, used to cost a unit from the per-mL NADAC price
+  #   doses_mg        ordered dose and weight
+  #   prn             true = as needed with use_prob per interval, false = scheduled
+  #   night_only      bedtime drugs, doses only between 21:00 and 01:00
+  drugs:
+    morphine_inj_4mg_ml: { unit_of_issue: VIAL, mg_per_unit: 4, unit_volume_ml: 1, doses_mg: { 2: 0.5, 4: 0.5 }, prn: true, interval_h: 3, use_prob: 0.7 }
+    hydromorphone_inj_1mg_ml: { unit_of_issue: CARTRIDGE, mg_per_unit: 1, unit_volume_ml: 1, doses_mg: { 0.2: 0.2, 0.5: 0.5, 1: 0.3 }, prn: true, interval_h: 3, use_prob: 0.7 }
+    fentanyl_inj_50mcg_ml: { unit_of_issue: VIAL, mg_per_unit: 0.1, unit_volume_ml: 2, doses_mg: { 0.025: 0.3, 0.05: 0.5, 0.1: 0.2 }, prn: true, interval_h: 2, use_prob: 0.65 }
+    oxycodone_tab_5mg: { unit_of_issue: TAB, mg_per_unit: 5, doses_mg: { 5: 0.6, 10: 0.4 }, prn: true, interval_h: 4, use_prob: 0.75 }
+    hydrocodone_apap_tab_5_325: { unit_of_issue: TAB, mg_per_unit: 5, doses_mg: { 5: 0.7, 10: 0.3 }, prn: true, interval_h: 6, use_prob: 0.75 }
+    morphine_ir_tab_15mg: { unit_of_issue: TAB, mg_per_unit: 15, doses_mg: { 15: 0.8, 30: 0.2 }, prn: true, interval_h: 4, use_prob: 0.65 }
+    tramadol_tab_50mg: { unit_of_issue: TAB, mg_per_unit: 50, doses_mg: { 50: 0.7, 100: 0.3 }, prn: true, interval_h: 6, use_prob: 0.65 }
+    buprenorphine_sl_tab_8mg: { unit_of_issue: TAB, mg_per_unit: 8, doses_mg: { 4: 0.2, 8: 0.5, 16: 0.3 }, prn: false, interval_h: 24 }
+    lorazepam_tab_1mg: { unit_of_issue: TAB, mg_per_unit: 1, doses_mg: { 0.5: 0.3, 1: 0.5, 2: 0.2 }, prn: true, interval_h: 6, use_prob: 0.6 }
+    lorazepam_inj_2mg_ml: { unit_of_issue: VIAL, mg_per_unit: 2, unit_volume_ml: 1, doses_mg: { 1: 0.5, 2: 0.5 }, prn: true, interval_h: 4, use_prob: 0.55 }
+    clonazepam_tab_0_5mg: { unit_of_issue: TAB, mg_per_unit: 0.5, doses_mg: { 0.5: 0.6, 1: 0.4 }, prn: false, interval_h: 12 }
+    diazepam_tab_5mg: { unit_of_issue: TAB, mg_per_unit: 5, doses_mg: { 5: 0.6, 10: 0.4 }, prn: true, interval_h: 6, use_prob: 0.55 }
+    diazepam_inj_5mg_ml: { unit_of_issue: VIAL, mg_per_unit: 10, unit_volume_ml: 2, doses_mg: { 5: 0.6, 10: 0.4 }, prn: true, interval_h: 6, use_prob: 0.5 }
+    alprazolam_tab_0_25mg: { unit_of_issue: TAB, mg_per_unit: 0.25, doses_mg: { 0.25: 0.6, 0.5: 0.4 }, prn: true, interval_h: 8, use_prob: 0.6 }
+    midazolam_inj_1mg_ml: { unit_of_issue: VIAL, mg_per_unit: 2, unit_volume_ml: 2, doses_mg: { 1: 0.4, 2: 0.6 }, prn: true, interval_h: 2, use_prob: 0.5 }
+    zolpidem_tab_5mg: { unit_of_issue: TAB, mg_per_unit: 5, doses_mg: { 5: 0.8, 10: 0.2 }, prn: true, interval_h: 24, use_prob: 0.75, night_only: true }
+    ketamine_inj_50mg_ml: { unit_of_issue: VIAL, mg_per_unit: 500, unit_volume_ml: 10, doses_mg: { 25: 0.3, 50: 0.4, 100: 0.3 }, prn: true, interval_h: 6, use_prob: 0.4 }
+    phenobarbital_inj_65mg_ml: { unit_of_issue: VIAL, mg_per_unit: 65, unit_volume_ml: 1, doses_mg: { 32.5: 0.3, 65: 0.5, 130: 0.2 }, prn: false, interval_h: 8 }
+    methylphenidate_tab_10mg: { unit_of_issue: TAB, mg_per_unit: 10, doses_mg: { 10: 0.7, 20: 0.3 }, prn: false, interval_h: 24 }
+    pregabalin_cap_75mg: { unit_of_issue: CAP, mg_per_unit: 75, doses_mg: { 75: 0.7, 150: 0.3 }, prn: false, interval_h: 12 }
+
+  inventory:
+    par_units: { TAB: 40, CAP: 40, VIAL: 15, CARTRIDGE: 15 }
+    restock_below_fraction: 0.35
+    restock_hour: 10
+    # Blind count on every access for these schedules, plus every restock.
+    count_on_access_schedules: [CII, CIII, CIV, CV]
+    # Shift-change count of every pocket holding these schedules.
+    shift_count_schedules: [CII, CIII, CIV, CV]
+    discrepancy_rate: 0.003
+    resolve_rate: 0.95
+    resolve_hours: [1, 24]
+    resolution_codes: { COUNT_ERROR: 0.5, DOCUMENTATION_ERROR: 0.35, RESTOCK_ERROR: 0.15 }
+
+  # Rates for every user. Injected patterns raise these for specific users after their start date.
+  base_rates:
+    cancel: 0.03
+    return: 0.02
+    override_random: 0.01
+    unwitnessed_waste: 0.003
+    waste_delay_min: [0, 15]
+    late_waste: 0.02
+    late_waste_delay_min: [20, 60]
+    pull_no_order: 0.002
+    pull_after_stop: 0.003
+    pull_after_stop_min: [5, 60]
+
+  injection:
+    rate: 0.03
+    # Each injected user gets 1 or 2 patterns, dealt so every pattern is used when there are enough users.
+    max_patterns_per_user: 2
+    start_day_range: [30, 120]
+    patterns:
+      high_waste_ratio: { extra_waste_prob: 0.45, waste_fraction: [0.5, 1.0] }
+      unwitnessed_waste: { prob: 0.55 }
+      witness_collusion: { prob: 0.8 }
+      delayed_waste: { prob: 0.7, delay_min: [60, 240] }
+      pull_no_order: { per_shift_prob: 0.5 }
+      pull_after_discharge_or_transfer: { per_shift_prob: 0.4, window_hours: 4 }
+      high_cancel: { cancel_prob: 0.22 }
+
+  corruption:
+    rate: 0.005
+    rules: [null_user_id, null_cabinet_id, negative_quantity, ts_outside_window, unknown_ndc, unknown_cabinet]
+    unknown_ndc: "99999999999"
+    unknown_cabinet: CAB-UNKNOWN
+
+  # Fixed fake-name list. Combinations are synthetic and refer to no real person.
+  names:
+    first: [Avery, Blake, Casey, Dana, Elliot, Finley, Gray, Harper, Indy, Jordan, Kai, Logan, Morgan, Noel, Oakley,
+            Parker, Quinn, Reese, Sage, Taylor, Umi, Val, Wren, Xan, Yael, Zion, Arden, Brook, Cam, Drew]
+    last: [Ashford, Bellamy, Corvin, Dunmore, Everly, Fairhaven, Glenwood, Hartwell, Ivers, Jessup, Kinsley, Larkin,
+           Merriweather, Northcott, Oakhurst, Pembrook, Quill, Ravensworth, Stanhope, Thistlewood]
