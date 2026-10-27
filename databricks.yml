@@ -1,0 +1,33 @@
+# Controlled Substance Surveillance Lakehouse (synthetic data).
+# Bundle docs: https://docs.databricks.com/aws/en/dev-tools/bundles/
+bundle:
+  name: dabs-rx
+
+include:
+  - resources/*.yml
+
+variables:
+  catalog:
+    description: Unity Catalog catalog that holds every schema in this bundle.
+    default: dabs-rx
+
+# Schema and volume names live in resources/schemas.yml and resources/volumes.yml.
+# Reference them as ${resources.schemas.<key>.name}. Dev and prod are separated by
+# the development-mode name prefix, not by a variable.
+targets:
+  dev:
+    mode: development
+    default: true
+    workspace:
+      host: https://dbc-714a029d-224e.cloud.databricks.com
+
+  prod:
+    mode: production
+    workspace:
+      host: https://dbc-714a029d-224e.cloud.databricks.com
+      root_path: /Workspace/Users/${workspace.current_user.userName}/.bundle/${bundle.name}/${bundle.target}
+    run_as:
+      user_name: ${workspace.current_user.userName}
+    permissions:
+      - user_name: ${workspace.current_user.userName}
+        level: CAN_MANAGE

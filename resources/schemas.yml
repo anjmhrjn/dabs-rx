@@ -1,0 +1,22 @@
+resources:
+  schemas:
+    bronze:
+      catalog_name: ${var.catalog}
+      name: rx_bronze
+      comment: Raw synthetic ADC events and reference data, as ingested.
+    silver:
+      catalog_name: ${var.catalog}
+      name: rx_silver
+      comment: Cleaned synthetic events with compliance flags, quarantine, and SCD2 staff assignments.
+    gold:
+      catalog_name: ${var.catalog}
+      name: rx_gold
+      comment: Synthetic reporting marts, user risk scores, and the monthly audit snapshot.
+    eval:
+      catalog_name: ${var.catalog}
+      name: rx_eval
+      comment: Injected diversion labels and evaluation metrics. Only src/eval/ reads this schema.
+    reporting:
+      catalog_name: ${var.catalog}
+      name: rx_reporting
+      comment: Governed views that the dashboard queries.
