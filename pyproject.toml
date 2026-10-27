@@ -4,7 +4,9 @@ version = "0.0.1"
 description = "Controlled substance surveillance lakehouse on synthetic data (Databricks Asset Bundle)."
 authors = [{ name = "anjmhrjn1@gmail.com" }]
 requires-python = ">=3.11,<3.12"
-dependencies = []
+dependencies = [
+    "pyyaml>=6.0.3",
+]
 
 [dependency-groups]
 dev = [
@@ -17,6 +19,7 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 
 [tool.ruff]
 line-length = 120
