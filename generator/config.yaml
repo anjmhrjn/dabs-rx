@@ -1,0 +1,285 @@
+# Generator config for dabs-rx. All generated data is synthetic.
+# CP1 uses the `reference` section. Simulation settings are added in CP2.
+
+reference:
+  # Seeds the fallback unit costs for items with no NADAC price.
+  seed: 20261027
+  # NADAC dataset year on data.medicaid.gov. The dataset id is looked up by title at fetch time.
+  nadac_year: 2026
+  fetch_timeout_s: 60
+  nadac_batch_size: 200
+
+  # Fallback cost per pricing unit (EA for oral solids, ML for injections), in USD.
+  # Used only when no NADAC price exists for the chosen NDC. Rows get cost_source = 'fallback'.
+  fallback_cost:
+    oral_solid: { pricing_unit: EA, min: 0.10, max: 2.50 }
+    injection: { pricing_unit: ML, min: 1.50, max: 12.00 }
+
+  # Curated controlled substance formulary. Each item maps to one NDC chosen from openFDA.
+  #   search_name     openFDA generic_name phrase to search on
+  #   generic_names   exact generic_name values (lowercase) to accept, filters out combination products
+  #   route           openFDA route
+  #   dosage_forms    accepted openFDA dosage_form values
+  #   strengths       accepted openFDA strength strings, joined with "; " for combination products
+  #   form_group      oral_solid or injection, picks the fallback cost range
+  #   shortage_names  exact FDA shortage generic_name values that mean this item is short
+  formulary:
+    - drug_key: morphine_inj_4mg_ml
+      display_name: Morphine 4 mg/mL injection
+      search_name: morphine sulfate
+      generic_names: [morphine sulfate]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [4 mg/mL]
+      form_group: injection
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Morphine Sulfate Injection]
+
+    - drug_key: hydromorphone_inj_1mg_ml
+      display_name: Hydromorphone 1 mg/mL injection
+      search_name: hydromorphone hydrochloride
+      generic_names: [hydromorphone hydrochloride]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [1 mg/mL]
+      form_group: injection
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Hydromorphone Hydrochloride Injection]
+
+    - drug_key: fentanyl_inj_50mcg_ml
+      display_name: Fentanyl 50 mcg/mL injection
+      search_name: fentanyl citrate
+      generic_names: [fentanyl citrate]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [50 ug/mL, .05 mg/mL]
+      form_group: injection
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Fentanyl Citrate Injection]
+
+    - drug_key: oxycodone_tab_5mg
+      display_name: Oxycodone 5 mg tablet
+      search_name: oxycodone hydrochloride
+      generic_names: [oxycodone hydrochloride]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [5 mg/1]
+      form_group: oral_solid
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Oxycodone Hydrochloride Tablet]
+
+    - drug_key: hydrocodone_apap_tab_5_325
+      display_name: Hydrocodone/APAP 5/325 mg tablet
+      search_name: hydrocodone bitartrate and acetaminophen
+      generic_names: [hydrocodone bitartrate and acetaminophen]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: ["5 mg/1; 325 mg/1"]
+      form_group: oral_solid
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Acetaminophen; Hydrocodone Bitartrate Tablet]
+
+    - drug_key: morphine_ir_tab_15mg
+      display_name: Morphine IR 15 mg tablet
+      search_name: morphine sulfate
+      generic_names: [morphine sulfate]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [15 mg/1]
+      form_group: oral_solid
+      expected_schedule: CII
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Morphine Sulfate Tablet]
+
+    - drug_key: tramadol_tab_50mg
+      display_name: Tramadol 50 mg tablet
+      search_name: tramadol hydrochloride
+      generic_names: [tramadol hydrochloride]
+      route: ORAL
+      dosage_forms: [TABLET, "TABLET, COATED", "TABLET, FILM COATED"]
+      strengths: [50 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: opioid
+      psych_relevant: false
+      shortage_names: [Tramadol Hydrochloride Tablet]
+
+    - drug_key: buprenorphine_sl_tab_8mg
+      display_name: Buprenorphine 8 mg SL tablet
+      search_name: buprenorphine hydrochloride
+      generic_names: [buprenorphine hydrochloride]
+      route: SUBLINGUAL
+      dosage_forms: [TABLET]
+      strengths: [8 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIII
+      therapeutic_class: opioid
+      psych_relevant: true
+      shortage_names: [Buprenorphine Hydrochloride Tablet]
+
+    - drug_key: lorazepam_tab_1mg
+      display_name: Lorazepam 1 mg tablet
+      search_name: lorazepam
+      generic_names: [lorazepam]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [1 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Lorazepam Tablet]
+
+    - drug_key: lorazepam_inj_2mg_ml
+      display_name: Lorazepam 2 mg/mL injection
+      search_name: lorazepam
+      generic_names: [lorazepam]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [2 mg/mL]
+      form_group: injection
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Lorazepam Injection]
+
+    - drug_key: clonazepam_tab_0_5mg
+      display_name: Clonazepam 0.5 mg tablet
+      search_name: clonazepam
+      generic_names: [clonazepam]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [.5 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Clonazepam Tablet]
+
+    - drug_key: diazepam_tab_5mg
+      display_name: Diazepam 5 mg tablet
+      search_name: diazepam
+      generic_names: [diazepam]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [5 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Diazepam Tablet]
+
+    - drug_key: diazepam_inj_5mg_ml
+      display_name: Diazepam 5 mg/mL injection
+      search_name: diazepam
+      generic_names: [diazepam]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [5 mg/mL]
+      form_group: injection
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Diazepam Injection]
+
+    - drug_key: alprazolam_tab_0_25mg
+      display_name: Alprazolam 0.25 mg tablet
+      search_name: alprazolam
+      generic_names: [alprazolam]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [.25 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: true
+      shortage_names: [Alprazolam Tablet]
+
+    - drug_key: midazolam_inj_1mg_ml
+      display_name: Midazolam 1 mg/mL injection
+      search_name: midazolam
+      generic_names: [midazolam, midazolam hydrochloride]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [1 mg/mL]
+      form_group: injection
+      expected_schedule: CIV
+      therapeutic_class: benzodiazepine
+      psych_relevant: false
+      shortage_names: [Midazolam Hydrochloride Injection, Midazolam Injection]
+
+    - drug_key: zolpidem_tab_5mg
+      display_name: Zolpidem 5 mg tablet
+      search_name: zolpidem tartrate
+      generic_names: [zolpidem tartrate]
+      route: ORAL
+      dosage_forms: [TABLET, "TABLET, FILM COATED"]
+      strengths: [5 mg/1]
+      form_group: oral_solid
+      expected_schedule: CIV
+      therapeutic_class: sedative_hypnotic
+      psych_relevant: true
+      shortage_names: [Zolpidem Tartrate Tablet]
+
+    - drug_key: ketamine_inj_50mg_ml
+      display_name: Ketamine 50 mg/mL injection
+      search_name: ketamine hydrochloride
+      generic_names: [ketamine hydrochloride]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [50 mg/mL]
+      form_group: injection
+      expected_schedule: CIII
+      therapeutic_class: anesthetic
+      psych_relevant: false
+      shortage_names: [Ketamine Hydrochloride Injection]
+
+    - drug_key: phenobarbital_inj_65mg_ml
+      display_name: Phenobarbital 65 mg/mL injection
+      search_name: phenobarbital sodium
+      generic_names: [phenobarbital sodium]
+      route: INTRAVENOUS
+      dosage_forms: [INJECTION, "INJECTION, SOLUTION"]
+      strengths: [65 mg/mL]
+      form_group: injection
+      expected_schedule: CIV
+      therapeutic_class: barbiturate
+      psych_relevant: true
+      shortage_names: [Phenobarbital Sodium Injection]
+
+    - drug_key: methylphenidate_tab_10mg
+      display_name: Methylphenidate 10 mg tablet
+      search_name: methylphenidate hydrochloride
+      generic_names: [methylphenidate hydrochloride]
+      route: ORAL
+      dosage_forms: [TABLET]
+      strengths: [10 mg/1]
+      form_group: oral_solid
+      expected_schedule: CII
+      therapeutic_class: stimulant
+      psych_relevant: true
+      shortage_names: [Methylphenidate Hydrochloride Tablet]
+
+    - drug_key: pregabalin_cap_75mg
+      display_name: Pregabalin 75 mg capsule
+      search_name: pregabalin
+      generic_names: [pregabalin]
+      route: ORAL
+      dosage_forms: [CAPSULE]
+      strengths: [75 mg/1]
+      form_group: oral_solid
+      expected_schedule: CV
+      therapeutic_class: anticonvulsant
+      psych_relevant: false
+      shortage_names: [Pregabalin Capsule]
