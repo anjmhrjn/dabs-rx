@@ -27,7 +27,8 @@ def corrupt_rows(
         elif rule == "null_cabinet_id":
             row["cabinet_id"] = ""
         elif rule == "negative_quantity":
-            row["quantity"] = -abs(float(row["quantity"] or 1))
+            # A zero quantity would become -0, which is still a valid value. Use -1 then.
+            row["quantity"] = -(abs(float(row["quantity"] or 0)) or 1)
         elif rule == "ts_outside_window":
             ts = (
                 start - timedelta(days=rng.uniform(1, 60))

@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 3 (bronze). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded into bronze tables by the pipeline. Silver, gold, scoring, and the dashboard come in later checkpoints.
+Checkpoint 4 (silver). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze tables, then checked, typed, and flagged in silver. Gold, scoring, and the dashboard come in later checkpoints.
 
 ## Layout
 
@@ -107,6 +107,33 @@ The pipeline (`resources/pipeline.yml`) runs on serverless compute. Its bronze l
 - **Batch tables** (`ref_*`) for the reference files.
 
 Bronze keeps every source column as text. It adds `_ingested_at` and `_source_file`, and Auto Loader adds `_rescued_data`. Values are checked and typed in silver.
+
+## Silver: data quality and compliance flags
+
+Silver (`src/pipeline/silver.py`) applies two different kinds of rules.
+
+**Data quality rules** catch bad data. The rules are defined once in `src/pipeline/rules.py`:
+- missing event, user, or cabinet ID
+- negative quantity
+- timestamp outside the simulation window
+- unknown NDC or cabinet
+
+They run as pipeline expectations, so pass and fail counts appear in the pipeline event log. A row that fails goes to `adc_events_quarantine` with the names of the rules it failed. No row is dropped without a record.
+
+**Compliance flags** mark valid events that a pharmacist may want to review. They are columns on `adc_events`, and the events stay in the table, because they really happened.
+
+| Flag | Meaning |
+|---|---|
+| `is_override` | Pulled before a pharmacist verified the order |
+| `is_unwitnessed_waste` | Waste recorded with no witness |
+| `is_delayed_waste` | Waste more than `waste_delay_minutes` (default 30) after the pull |
+| `is_pull_without_active_order` | No order on file for that drug, or the order was not active at the time |
+| `is_pull_after_discharge` | Pulled after the patient was discharged |
+| `is_pull_after_transfer` | Pulled on a unit the patient had already left |
+
+Each event also carries the nurse's unit and shift at the time of the event (`assigned_unit_id`, `assigned_shift`). These come from `staff_unit_scd2`, a full history of staff assignments (SCD Type 2), so a nurse who transfers is compared with the right peers before and after the move.
+
+Thresholds and the simulation window are bundle variables in `databricks.yml`.
 
 ## Commands
 

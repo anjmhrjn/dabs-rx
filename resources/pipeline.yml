@@ -6,6 +6,8 @@ resources:
       catalog: ${var.catalog}
       # Default schema for unqualified tables (bronze). Silver and gold use fully qualified names.
       schema: ${resources.schemas.bronze.name}
+      # Added to sys.path, so pipeline files can import shared modules such as rules.py.
+      root_path: ../src/pipeline
       libraries:
         - glob:
             include: ../src/pipeline/**
@@ -15,3 +17,6 @@ resources:
         rx.bronze_schema: ${resources.schemas.bronze.name}
         rx.silver_schema: ${resources.schemas.silver.name}
         rx.gold_schema: ${resources.schemas.gold.name}
+        rx.window_start: ${var.window_start}
+        rx.window_end: ${var.window_end}
+        rx.waste_delay_minutes: ${var.waste_delay_minutes}

@@ -11,6 +11,19 @@ variables:
     description: Unity Catalog catalog that holds every schema in this bundle.
     default: dabs-rx
 
+  # Simulation window. Must match simulation.start_date and days in generator/config.yaml (a test checks this).
+  window_start:
+    description: First day of the simulated data, inclusive.
+    default: "2026-03-01"
+  window_end:
+    description: Day after the last simulated day, exclusive.
+    default: "2026-08-28"
+
+  # Screening thresholds, passed to the pipeline and jobs as configuration.
+  waste_delay_minutes:
+    description: A WASTE more than this many minutes after its pull is flagged as delayed.
+    default: 30
+
 # Schema and volume names live in resources/schemas.yml and resources/volumes.yml.
 # Reference them as ${resources.schemas.<key>.name}. Dev and prod are separated by
 # the development-mode name prefix, not by a variable.
