@@ -1,0 +1,17 @@
+resources:
+  pipelines:
+    rx_pipeline:
+      name: rx-surveillance-pipeline
+      serverless: true
+      catalog: ${var.catalog}
+      # Default schema for unqualified tables (bronze). Silver and gold use fully qualified names.
+      schema: ${resources.schemas.bronze.name}
+      libraries:
+        - glob:
+            include: ../src/pipeline/**
+      configuration:
+        rx.landing_path: ${resources.volumes.landing.volume_path}
+        rx.catalog: ${var.catalog}
+        rx.bronze_schema: ${resources.schemas.bronze.name}
+        rx.silver_schema: ${resources.schemas.silver.name}
+        rx.gold_schema: ${resources.schemas.gold.name}

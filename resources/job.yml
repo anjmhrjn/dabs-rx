@@ -1,0 +1,9 @@
+resources:
+  jobs:
+    rx_job:
+      name: rx-surveillance-job
+      # Free Edition allows at most 5 concurrent tasks. Tasks run in sequence.
+      tasks:
+        - task_key: refresh_pipeline
+          pipeline_task:
+            pipeline_id: ${resources.pipelines.rx_pipeline.id}
