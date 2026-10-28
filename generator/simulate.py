@@ -152,7 +152,7 @@ def run_simulation(sim: dict[str, Any], formulary: dict[str, dict[str, str]]) ->
 
 def _adc_rows(events: list[Tx], hospital: Hospital, formulary: dict[str, dict[str, str]]) -> list[dict[str, Any]]:
     cab_fac = {c["cabinet_id"]: c["facility_id"] for c in hospital.cabinets}
-    ordered = sorted(events, key=lambda t: (t.ts, t.k))
+    ordered = sorted(events, key=lambda t: (t.ts, t.seq))
     ids = {t.k: f"E{i + 1:07d}" for i, t in enumerate(ordered)}
     return [
         {

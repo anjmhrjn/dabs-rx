@@ -7,6 +7,7 @@ Two passes:
      and DISCREPANCY_RESOLVED events.
 """
 
+import heapq
 import math
 import random
 from collections import Counter, defaultdict
@@ -46,6 +47,7 @@ class Tx:
     related: int | None = None
     resolution_code: str = ""
     count_on_access: bool = False
+    seq: int = 0  # position in the inventory replay; orders events that share a timestamp
 
 
 @dataclass
@@ -376,27 +378,32 @@ class AdcSimulator:
     # pass 2: inventory, restocks, counts
 
     def _inventory_pass(self) -> list[Tx]:
+        """Replay stock in time order. Every event that reads or changes stock is processed at its own timestamp,
+        so a COUNT's expected_quantity is the true on-hand at that moment."""
         tl, inv, rng = self.tl, self.sim["inventory"], self.rng
         on_hand = dict(self.h.par)
-        actions: list[tuple[datetime, int, str, Any]] = [(tx.ts, tx.k, "TX", tx) for tx in self.txs]
+        heap: list[tuple[datetime, int, str, Any]] = []
+
+        def push(ts: datetime, kind: str, obj: Any) -> None:
+            heapq.heappush(heap, (ts, self._next_k(), kind, obj))
+
+        for tx in self.txs:
+            heap.append((tx.ts, tx.k, "TX", tx))
+            if tx.event_type in ("PULL", "OVERRIDE") and tx.count_on_access:
+                heap.append((tx.ts - timedelta(seconds=30), self._next_k(), "ACCESS_COUNT", tx))
+        heapq.heapify(heap)
         for d in range(tl.days):
             for fac in self.sim["facilities"]:
-                actions.append(
-                    (tl.start + timedelta(days=d, hours=inv["restock_hour"]), self._next_k(), "RESTOCK", fac)
-                )
+                push(tl.start + timedelta(days=d, hours=inv["restock_hour"]), "RESTOCK", fac)
         for s in range(tl.n_shifts):
             for cab in self.h.cabinets:
-                actions.append((tl.shift_start(s), self._next_k(), "SHIFT_COUNT", (s, cab["cabinet_id"])))
-        actions.sort(key=lambda a: (a[0], a[1]))
+                push(tl.shift_start(s), "SHIFT_COUNT", (s, cab["cabinet_id"]))
 
         out: list[Tx] = []
 
-        def emit(tx: Tx) -> None:
-            out.append(tx)
-
         def new(ts: datetime, etype: str, cab: str, dk: str, user: str, **kw: Any) -> Tx:
             tx = Tx(self._next_k(), ts, etype, cab, dk, user, **kw)
-            emit(tx)
+            out.append(tx)
             return tx
 
         def count(ts: datetime, cab: str, dk: str, user: str) -> None:
@@ -423,13 +430,14 @@ class AdcSimulator:
             qty = self.h.par[(cab, dk)] - on_hand[(cab, dk)]
             new(ts, "RESTOCK", cab, dk, tech, quantity=qty)
             on_hand[(cab, dk)] = self.h.par[(cab, dk)]
-            count(ts + timedelta(seconds=60), cab, dk, tech)
+            push(ts + timedelta(seconds=60), "COUNT", (cab, dk, tech))
 
         cab_drugs: dict[str, list[str]] = defaultdict(list)
         for cab, dk in self.h.par:
             cab_drugs[cab].append(dk)
 
-        for ts, _, kind, obj in actions:
+        while heap:
+            ts, _, kind, obj = heapq.heappop(heap)
             if kind == "RESTOCK":
                 for cab in [c["cabinet_id"] for c in self.h.cabinets if c["facility_id"] == obj]:
                     for dk in cab_drugs[cab]:
@@ -440,20 +448,27 @@ class AdcSimulator:
                 nurses = self.working.get((s, self.cab_unit[cab])) or []
                 if nurses:
                     for dk in cab_drugs[cab]:
-                        if self.schedules[dk] in self.sim["inventory"]["shift_count_schedules"]:
-                            count(ts + timedelta(minutes=rng.uniform(0, 30)), cab, dk, nurses[0])
-            else:
+                        if self.schedules[dk] in inv["shift_count_schedules"]:
+                            push(ts + timedelta(minutes=rng.uniform(0, 30)), "COUNT", (cab, dk, nurses[0]))
+            elif kind == "COUNT":
+                count(ts, *obj)
+            elif kind == "ACCESS_COUNT":
                 tx: Tx = obj
+                if on_hand[(tx.cabinet_id, tx.drug_key)] < tx.quantity:
+                    restock(ts, tx.cabinet_id, tx.drug_key)
+                count(ts, tx.cabinet_id, tx.drug_key, tx.user_id)
+            else:
+                tx = obj
                 key = (tx.cabinet_id, tx.drug_key)
                 if tx.event_type in ("PULL", "OVERRIDE"):
                     if on_hand[key] < tx.quantity:
-                        restock(tx.ts - timedelta(seconds=120), tx.cabinet_id, tx.drug_key)
-                    if tx.count_on_access:
-                        count(tx.ts - timedelta(seconds=30), tx.cabinet_id, tx.drug_key, tx.user_id)
+                        restock(ts, tx.cabinet_id, tx.drug_key)
                     on_hand[key] -= tx.quantity
                 elif tx.event_type in ("CANCEL", "RETURN"):
                     on_hand[key] += tx.quantity
-                emit(tx)
+                out.append(tx)
+        for i, tx in enumerate(out):
+            tx.seq = i
         return [tx for tx in out if tx.ts < tl.end]
 
 
