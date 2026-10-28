@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 7 (all 180 days loaded). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 were loaded first and days 151 to 180 second, to show that each run reads only new files. The pipeline checks and flags the data in silver and summarizes it in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
+Checkpoint 8 (governance). All 180 days are loaded. The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 were loaded first and days 151 to 180 second, to show that each run reads only new files. Reporting views mask patient IDs and limit rows by facility. The pipeline checks and flags the data in silver and summarizes it in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
 
 ## Layout
 
@@ -16,7 +16,7 @@ Checkpoint 7 (all 180 days loaded). The local generator builds the formulary and
 | `resources/` | Schemas, landing volume, pipeline, job, and later the dashboard |
 | `generator/` | Local scripts that build the synthetic data and reference files |
 | `src/` | Pipeline, scoring, snapshot, and evaluation code |
-| `sql/governance/` | Column masks, row filters, and reporting views |
+| `sql/governance/` | Facility access table, ID mask, facility filter, and reporting views |
 | `tests/` | Local tests (`uv run pytest`) |
 
 ## Schemas
@@ -198,6 +198,18 @@ How to read this:
 - **Why the baseline does worse.** It mostly loses to ED nurses. Their override and waste rates are high for ordinary reasons, and they look normal next to other ED nurses.
 - **False positives.** Most come from small numbers. A nurse with one or two pulls after discharge, in a month when none of their peers had any, stands out sharply even though one event is weak evidence.
 
+
+## Governance
+
+Readers see the data only through views in the `reporting` schema (`sql/governance/`, applied by `rx_governance_job`).
+- **Patient IDs.** Patient and admission IDs are shown only to members of the workspace group `rx_privileged`. Everyone else sees a short hash, such as `h_00ab325d8e51`, so they can still count and group by patient.
+- **Facilities.** Each view shows only the facilities listed for the reader in `reporting.user_facility_access`. Change access by adding or deleting rows in that table.
+
+The mask and filter are built into the views, not attached to the tables. On this workspace, table-level masks would have to live in the pipeline definition, and they would block the time travel the audit snapshot relies on. `docs/design_notes.md` explains the choice and records the access checks: what one user saw inside and outside the group, and with access to one facility or both.
+
+```bash
+databricks bundle run rx_governance_job -t dev   # after the first pipeline run, and when sql/governance/ changes
+```
 
 ## Commands
 

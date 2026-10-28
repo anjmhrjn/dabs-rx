@@ -19,7 +19,7 @@ package = false
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-pythonpath = [".", "src/pipeline", "src/scoring", "src/eval"]
+pythonpath = [".", "src/pipeline", "src/scoring", "src/eval", "src/governance"]
 
 [tool.ruff]
 line-length = 120
