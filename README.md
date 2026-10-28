@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 4 (silver). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze tables, then checked, typed, and flagged in silver. Gold, scoring, and the dashboard come in later checkpoints.
+Checkpoint 5 (gold). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze, checked and flagged in silver, and summarized in gold report tables. Scoring and the dashboard come in later checkpoints.
 
 ## Layout
 
@@ -134,6 +134,34 @@ They run as pipeline expectations, so pass and fail counts appear in the pipelin
 Each event also carries the nurse's unit and shift at the time of the event (`assigned_unit_id`, `assigned_shift`). These come from `staff_unit_scd2`, a full history of staff assignments (SCD Type 2), so a nurse who transfers is compared with the right peers before and after the move.
 
 Thresholds and the simulation window are bundle variables in `databricks.yml`.
+
+## Gold: report tables
+
+Gold (`src/pipeline/gold.py`) builds the tables that reports and scoring read. All are materialized views over silver.
+
+| Table | One row per | What it answers |
+|---|---|---|
+| `daily_discrepancies` | day, cabinet, drug | Which count discrepancies happened, and which are still unresolved |
+| `daily_compliance_events` | day, unit, flag type | How many overrides, unwitnessed wastes, late wastes, and pulls without an order or after the patient left |
+| `user_activity_monthly` | nurse, month, peer group | Each nurse's monthly activity (see the list below) |
+| `inventory_daily` | day, cabinet, drug | End-of-day on hand, average daily use, days on hand, and whether the pocket is below its restock level |
+| `shortage_exposure` | drug, facility | Formulary items on the current FDA shortage list, with on hand and days on hand |
+| `procurement_monthly` | month, facility, drug | Units restocked and estimated spend |
+
+The monthly activity measures in `user_activity_monthly` are:
+- pulls per patient-day
+- waste ratio
+- unwitnessed wastes
+- median minutes to waste
+- override and cancel rates
+- pulls after discharge or transfer
+- witness concentration: the share of wastes signed by the same witness
+
+A nurse's peer group is facility, unit, and shift at the time of each event.
+
+**On hand** is taken from the cabinet's own last count of the day, plus any movements after that count. No starting stock is assumed. Days on hand is cabinet stock divided by average daily use over the last 28 days (`usage_lookback_days`). Pharmacy central stock is not modeled, so these numbers describe what is in the cabinet.
+
+**Estimated spend** is units restocked times the NADAC unit cost, or the fallback cost, converted to the unit the cabinet dispenses (for example, per vial). It is an estimate, not an invoice amount.
 
 ## Commands
 
