@@ -189,3 +189,19 @@ def test_adt_and_orders_cover_every_admission(small_files: Path) -> None:
         r for r in read(small_files, "adc_events") if r["event_type"] in ("PULL", "OVERRIDE") and r["admission_id"]
     ]
     assert {r["admission_id"] for r in pulls} <= admitted
+
+
+def test_count_expected_matches_stock_at_its_timestamp(full: SimOutput) -> None:
+    """Replaying stock movements in output (event_id) order from par must reproduce every COUNT's expected value."""
+    sign = {"RESTOCK": 1, "RETURN": 1, "CANCEL": 1, "PULL": -1, "OVERRIDE": -1}
+    on_hand = dict(full.hospital.par)
+    checked = 0
+    for t in sorted(full.events, key=lambda t: (t.ts, t.seq)):
+        key = (t.cabinet_id, t.drug_key)
+        if t.event_type == "COUNT":
+            assert t.expected_quantity == on_hand[key], (t.k, t.ts, key)
+            checked += 1
+        elif t.event_type in sign:
+            on_hand[key] += sign[t.event_type] * t.quantity
+            assert on_hand[key] >= 0, (t.k, key)
+    assert checked > 50_000

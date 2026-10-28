@@ -20,3 +20,4 @@ resources:
         rx.window_start: ${var.window_start}
         rx.window_end: ${var.window_end}
         rx.waste_delay_minutes: ${var.waste_delay_minutes}
+        rx.usage_lookback_days: ${var.usage_lookback_days}

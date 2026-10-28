@@ -27,9 +27,7 @@ def test_thresholds_present() -> None:
 def test_pipeline_gets_every_rx_setting_silver_reads() -> None:
     with (REPO_ROOT / "resources" / "pipeline.yml").open() as f:
         conf = yaml.safe_load(f)["resources"]["pipelines"]["rx_pipeline"]["configuration"]
-    source = (REPO_ROOT / "src" / "pipeline" / "silver.py").read_text() + (
-        REPO_ROOT / "src" / "pipeline" / "bronze.py"
-    ).read_text()
+    source = "".join(p.read_text() for p in (REPO_ROOT / "src" / "pipeline").glob("*.py"))
     import re
 
     used = set(re.findall(r'spark\.conf\.get\("(rx\.[a-z_]+)"\)', source))

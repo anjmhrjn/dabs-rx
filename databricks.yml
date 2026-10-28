@@ -23,6 +23,9 @@ variables:
   waste_delay_minutes:
     description: A WASTE more than this many minutes after its pull is flagged as delayed.
     default: 30
+  usage_lookback_days:
+    description: Trailing days used for average daily usage and days on hand.
+    default: 28
 
 # Schema and volume names live in resources/schemas.yml and resources/volumes.yml.
 # Reference them as ${resources.schemas.<key>.name}. Dev and prod are separated by
