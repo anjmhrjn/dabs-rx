@@ -85,6 +85,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -98,6 +102,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -111,6 +119,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -124,6 +136,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -182,6 +198,10 @@
                     {
                       "name": "report_date",
                       "expression": "`report_date`"
+                    },
+                    {
+                      "name": "report_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -195,6 +215,10 @@
                     {
                       "name": "report_date",
                       "expression": "`report_date`"
+                    },
+                    {
+                      "name": "report_date_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -404,142 +428,264 @@
             "spec": {
               "version": 1,
               "widgetType": "table",
-              "itemsPerPage": 25,
-              "condensed": true,
-              "withRowNumber": false,
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "report_date",
-                    "type": "date",
+                    "displayName": "Date",
+                    "title": "Date",
+                    "type": "datetime",
                     "displayAs": "datetime",
                     "visible": true,
                     "order": 100000,
-                    "title": "Date",
+                    "alignContent": "right",
                     "allowSearch": false,
-                    "alignContent": "left",
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "dateTimeFormat": "YYYY-MM-DD"
                   },
                   {
                     "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "title": "Facility",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100001,
-                    "title": "Facility",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "cabinet_id",
+                    "displayName": "Cabinet",
+                    "title": "Cabinet",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100002,
-                    "title": "Cabinet",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "display_name",
+                    "displayName": "Drug",
+                    "title": "Drug",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100003,
-                    "title": "Drug",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "dea_schedule",
+                    "displayName": "Schedule",
+                    "title": "Schedule",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100004,
-                    "title": "Schedule",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "discrepancies",
+                    "displayName": "Discrepancies",
+                    "title": "Discrepancies",
                     "type": "integer",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100005,
-                    "title": "Discrepancies",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
+                    "numberFormat": "0"
                   },
                   {
                     "fieldName": "unresolved",
+                    "displayName": "Unresolved",
+                    "title": "Unresolved",
                     "type": "integer",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100006,
-                    "title": "Unresolved",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
+                    "numberFormat": "0"
                   },
                   {
                     "fieldName": "net_variance_units",
+                    "displayName": "Counted minus expected",
+                    "title": "Counted minus expected",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100007,
-                    "title": "Counted minus expected",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "median_hours_to_resolve",
+                    "displayName": "Hours to resolve (median)",
+                    "title": "Hours to resolve (median)",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100008,
-                    "title": "Hours to resolve (median)",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   }
                 ]
               },
+              "invisibleColumns": [],
+              "allowHTMLByDefault": false,
+              "itemsPerPage": 25,
+              "paginationSize": "default",
+              "condensed": true,
+              "withRowNumber": false,
               "frame": {
                 "showTitle": true,
                 "title": "Count discrepancies",
@@ -665,114 +811,209 @@
             "spec": {
               "version": 1,
               "widgetType": "table",
-              "itemsPerPage": 25,
-              "condensed": true,
-              "withRowNumber": false,
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "title": "Facility",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100000,
-                    "title": "Facility",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "cabinet_id",
+                    "displayName": "Cabinet",
+                    "title": "Cabinet",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100001,
-                    "title": "Cabinet",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "drug_key",
+                    "displayName": "Drug",
+                    "title": "Drug",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100002,
-                    "title": "Drug",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "on_hand",
+                    "displayName": "On hand",
+                    "title": "On hand",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100003,
-                    "title": "On hand",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "restock_below",
+                    "displayName": "Restock level",
+                    "title": "Restock level",
                     "type": "integer",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100004,
-                    "title": "Restock level",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
+                    "numberFormat": "0"
                   },
                   {
                     "fieldName": "avg_daily_usage",
+                    "displayName": "Average daily use",
+                    "title": "Average daily use",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100005,
-                    "title": "Average daily use",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "days_on_hand",
+                    "displayName": "Days on hand",
+                    "title": "Days on hand",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100006,
-                    "title": "Days on hand",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   }
                 ]
               },
+              "invisibleColumns": [],
+              "allowHTMLByDefault": false,
+              "itemsPerPage": 25,
+              "paginationSize": "default",
+              "condensed": true,
+              "withRowNumber": false,
               "frame": {
                 "showTitle": true,
                 "title": "Below restock level (latest day)"
@@ -827,99 +1068,180 @@
             "spec": {
               "version": 1,
               "widgetType": "table",
-              "itemsPerPage": 25,
-              "condensed": true,
-              "withRowNumber": false,
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "title": "Facility",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100000,
-                    "title": "Facility",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "display_name",
+                    "displayName": "Drug",
+                    "title": "Drug",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100001,
-                    "title": "Drug",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "dea_schedule",
+                    "displayName": "Schedule",
+                    "title": "Schedule",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100002,
-                    "title": "Schedule",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "availability",
+                    "displayName": "FDA availability",
+                    "title": "FDA availability",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100003,
-                    "title": "FDA availability",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "on_hand_units",
+                    "displayName": "Cabinet on hand",
+                    "title": "Cabinet on hand",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100004,
-                    "title": "Cabinet on hand",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "days_on_hand",
+                    "displayName": "Days on hand",
+                    "title": "Days on hand",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100005,
-                    "title": "Days on hand",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   }
                 ]
               },
+              "invisibleColumns": [],
+              "allowHTMLByDefault": false,
+              "itemsPerPage": 25,
+              "paginationSize": "default",
+              "condensed": true,
+              "withRowNumber": false,
               "frame": {
                 "showTitle": true,
                 "title": "On the FDA shortage list",
@@ -972,6 +1294,10 @@
                     {
                       "name": "report_month",
                       "expression": "`report_month`"
+                    },
+                    {
+                      "name": "report_month_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -1015,6 +1341,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -1028,6 +1358,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -1041,6 +1375,10 @@
                     {
                       "name": "facility_id",
                       "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "facility_id_associativity",
+                      "expression": "COUNT_IF(`associative_filter_predicate_group`)"
                     }
                   ],
                   "disaggregated": false
@@ -1135,141 +1473,263 @@
             "spec": {
               "version": 1,
               "widgetType": "table",
-              "itemsPerPage": 25,
-              "condensed": true,
-              "withRowNumber": false,
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "report_month",
-                    "type": "date",
+                    "displayName": "Month",
+                    "title": "Month",
+                    "type": "datetime",
                     "displayAs": "datetime",
                     "visible": true,
                     "order": 100000,
-                    "title": "Month",
+                    "alignContent": "right",
                     "allowSearch": false,
-                    "alignContent": "left",
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "dateTimeFormat": "YYYY-MM-DD"
                   },
                   {
                     "fieldName": "rank",
+                    "displayName": "Rank",
+                    "title": "Rank",
                     "type": "integer",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100001,
-                    "title": "Rank",
-                    "allowSearch": false,
                     "alignContent": "right",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "user_id",
-                    "type": "string",
-                    "displayAs": "string",
-                    "visible": true,
-                    "order": 100002,
-                    "title": "Nurse",
-                    "allowSearch": true,
-                    "alignContent": "left",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "facility_id",
-                    "type": "string",
-                    "displayAs": "string",
-                    "visible": true,
-                    "order": 100003,
-                    "title": "Facility",
-                    "allowSearch": true,
-                    "alignContent": "left",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "unit_id",
-                    "type": "string",
-                    "displayAs": "string",
-                    "visible": true,
-                    "order": 100004,
-                    "title": "Unit",
-                    "allowSearch": true,
-                    "alignContent": "left",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "shift",
-                    "type": "string",
-                    "displayAs": "string",
-                    "visible": true,
-                    "order": 100005,
-                    "title": "Shift",
-                    "allowSearch": true,
-                    "alignContent": "left",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "pulls",
-                    "type": "integer",
-                    "displayAs": "number",
-                    "visible": true,
-                    "order": 100006,
-                    "title": "Pulls",
                     "allowSearch": false,
-                    "alignContent": "right",
-                    "booleanValues": [
-                      "false",
-                      "true"
-                    ]
-                  },
-                  {
-                    "fieldName": "score",
-                    "type": "float",
-                    "displayAs": "number",
-                    "visible": true,
-                    "order": 100007,
-                    "title": "Score",
-                    "allowSearch": false,
-                    "alignContent": "right",
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
+                    "numberFormat": "0"
+                  },
+                  {
+                    "fieldName": "user_id",
+                    "displayName": "Nurse",
+                    "title": "Nurse",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "title": "Facility",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100003,
+                    "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
+                  },
+                  {
+                    "fieldName": "unit_id",
+                    "displayName": "Unit",
+                    "title": "Unit",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100004,
+                    "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
+                  },
+                  {
+                    "fieldName": "shift",
+                    "displayName": "Shift",
+                    "title": "Shift",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100005,
+                    "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
+                  },
+                  {
+                    "fieldName": "pulls",
+                    "displayName": "Pulls",
+                    "title": "Pulls",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100006,
+                    "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
+                    "numberFormat": "0"
+                  },
+                  {
+                    "fieldName": "score",
+                    "displayName": "Score",
+                    "title": "Score",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100007,
+                    "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "reasons",
+                    "displayName": "Reasons",
+                    "title": "Reasons",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100008,
-                    "title": "Reasons",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   }
                 ]
               },
+              "invisibleColumns": [],
+              "allowHTMLByDefault": false,
+              "itemsPerPage": 25,
+              "paginationSize": "default",
+              "condensed": true,
+              "withRowNumber": false,
               "frame": {
                 "showTitle": true,
                 "title": "Monthly review list",
@@ -1462,114 +1922,208 @@
             "spec": {
               "version": 1,
               "widgetType": "table",
-              "itemsPerPage": 25,
-              "condensed": true,
-              "withRowNumber": false,
               "encodings": {
                 "columns": [
                   {
                     "fieldName": "report_month",
-                    "type": "date",
+                    "displayName": "Month",
+                    "title": "Month",
+                    "type": "datetime",
                     "displayAs": "datetime",
                     "visible": true,
                     "order": 100000,
-                    "title": "Month",
+                    "alignContent": "right",
                     "allowSearch": false,
-                    "alignContent": "left",
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "dateTimeFormat": "YYYY-MM-DD"
                   },
                   {
                     "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "title": "Facility",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100001,
-                    "title": "Facility",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "display_name",
+                    "displayName": "Drug",
+                    "title": "Drug",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100002,
-                    "title": "Drug",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "dea_schedule",
+                    "displayName": "Schedule",
+                    "title": "Schedule",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100003,
-                    "title": "Schedule",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   },
                   {
                     "fieldName": "restocked_units",
+                    "displayName": "Units restocked",
+                    "title": "Units restocked",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100004,
-                    "title": "Units restocked",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "est_spend",
+                    "displayName": "Estimated spend (USD)",
+                    "title": "Estimated spend (USD)",
                     "type": "float",
                     "displayAs": "number",
                     "visible": true,
                     "order": 100005,
-                    "title": "Estimated spend (USD)",
-                    "allowSearch": false,
                     "alignContent": "right",
+                    "allowSearch": false,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
                     ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true,
                     "numberFormat": "0.00"
                   },
                   {
                     "fieldName": "cost_source",
+                    "displayName": "Cost source",
+                    "title": "Cost source",
                     "type": "string",
                     "displayAs": "string",
                     "visible": true,
                     "order": 100006,
-                    "title": "Cost source",
-                    "allowSearch": true,
                     "alignContent": "left",
+                    "allowSearch": true,
+                    "allowHTML": false,
+                    "highlightLinks": false,
+                    "useMonospaceFont": false,
+                    "preserveWhitespace": false,
                     "booleanValues": [
                       "false",
                       "true"
-                    ]
+                    ],
+                    "imageUrlTemplate": "{{ @ }}",
+                    "imageTitleTemplate": "{{ @ }}",
+                    "imageWidth": "",
+                    "imageHeight": "",
+                    "linkUrlTemplate": "{{ @ }}",
+                    "linkTextTemplate": "{{ @ }}",
+                    "linkTitleTemplate": "{{ @ }}",
+                    "linkOpenInNewTab": true
                   }
                 ]
               },
+              "invisibleColumns": [],
+              "allowHTMLByDefault": false,
+              "itemsPerPage": 25,
+              "paginationSize": "default",
+              "condensed": true,
+              "withRowNumber": false,
               "frame": {
                 "showTitle": true,
                 "title": "Procurement by drug"

@@ -142,24 +142,43 @@ def chart(
 def table(
     name: str, dataset: str, columns: list[tuple[str, str, str]], title: str, position: dict, desc: str = ""
 ) -> dict:
-    """columns = (field, label, type) with type one of string, integer, float, date."""
-    display = {"string": "string", "integer": "number", "float": "number", "date": "datetime"}
+    """columns = (field, label, type) with type one of string, integer, float, datetime.
+
+    Column specs copy every key a table exported from the Databricks UI carries (table version 1). Leaving keys out,
+    or using a type the UI doesn't write (such as "date"), shows "Invalid widget definition".
+    """
+    display = {"string": "string", "integer": "number", "float": "number", "datetime": "datetime"}
     cols = []
     for i, (fname, label, ctype) in enumerate(columns):
         col: dict[str, Any] = {
             "fieldName": fname,
+            "displayName": label,
+            "title": label,
             "type": ctype,
             "displayAs": display[ctype],
             "visible": True,
             "order": 100000 + i,
-            "title": label,
+            "alignContent": "left" if ctype == "string" else "right",
             "allowSearch": ctype == "string",
-            "alignContent": "left" if ctype in ("string", "date") else "right",
+            "allowHTML": False,
+            "highlightLinks": False,
+            "useMonospaceFont": False,
+            "preserveWhitespace": False,
             "booleanValues": ["false", "true"],
+            "imageUrlTemplate": "{{ @ }}",
+            "imageTitleTemplate": "{{ @ }}",
+            "imageWidth": "",
+            "imageHeight": "",
+            "linkUrlTemplate": "{{ @ }}",
+            "linkTextTemplate": "{{ @ }}",
+            "linkTitleTemplate": "{{ @ }}",
+            "linkOpenInNewTab": True,
         }
-        if ctype == "date":
+        if ctype == "datetime":
             col["dateTimeFormat"] = "YYYY-MM-DD"
-        if ctype == "float":
+        elif ctype == "integer":
+            col["numberFormat"] = "0"
+        elif ctype == "float":
             col["numberFormat"] = "0.00"
         cols.append(col)
     return {
@@ -169,10 +188,13 @@ def table(
             "spec": {
                 "version": 1,
                 "widgetType": "table",
+                "encodings": {"columns": cols},
+                "invisibleColumns": [],
+                "allowHTMLByDefault": False,
                 "itemsPerPage": 25,
+                "paginationSize": "default",
                 "condensed": True,
                 "withRowNumber": False,
-                "encodings": {"columns": cols},
                 "frame": frame(title, desc),
             },
         },
@@ -182,7 +204,8 @@ def table(
 
 def filter_widget(kind: str, name: str, fname: str, datasets: list[str], title: str, position: dict) -> dict:
     """kind is 'filter-multi-select', 'filter-single-select', or 'filter-date-range-picker'."""
-    queries = [query(ds, [field(fname)], disaggregated=False, name=f"{name}_{ds}") for ds in datasets]
+    assoc = field(f"{fname}_associativity", "COUNT_IF(`associative_filter_predicate_group`)")
+    queries = [query(ds, [field(fname), assoc], disaggregated=False, name=f"{name}_{ds}") for ds in datasets]
     return {
         "widget": {
             "name": name,
@@ -254,7 +277,7 @@ def daily_page() -> dict:
                 "discrepancy_table",
                 "discrepancies",
                 [
-                    ("report_date", "Date", "date"),
+                    ("report_date", "Date", "datetime"),
                     ("facility_id", "Facility", "string"),
                     ("cabinet_id", "Cabinet", "string"),
                     ("display_name", "Drug", "string"),
@@ -338,7 +361,7 @@ def monthly_page() -> dict:
                 "review_list_table",
                 "review_list",
                 [
-                    ("report_month", "Month", "date"),
+                    ("report_month", "Month", "datetime"),
                     ("rank", "Rank", "integer"),
                     ("user_id", "Nurse", "string"),
                     ("facility_id", "Facility", "string"),
@@ -378,7 +401,7 @@ def monthly_page() -> dict:
                 "procurement_table",
                 "procurement",
                 [
-                    ("report_month", "Month", "date"),
+                    ("report_month", "Month", "datetime"),
                     ("facility_id", "Facility", "string"),
                     ("display_name", "Drug", "string"),
                     ("dea_schedule", "Schedule", "string"),
