@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 6 (scoring and evaluation). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze, checked and flagged in silver, and summarized in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
+Checkpoint 7 (all 180 days loaded). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 were loaded first and days 151 to 180 second, to show that each run reads only new files. The pipeline checks and flags the data in silver and summarizes it in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
 
 ## Layout
 
@@ -174,7 +174,7 @@ The job `rx_job` runs four tasks in order:
 | `snapshot_audit` | `src/snapshot/` | `gold.monthly_audit_snapshot` |
 | `evaluate` | `src/eval/` | `eval.injected_labels`, `eval.metrics` |
 
-**How a nurse is scored.** Each month, every measure in `user_activity_monthly` is compared with the other nurses in the same peer group (facility, unit, shift) as a z-score: how many standard deviations the nurse is from the mean of the others. The score adds up the measures where the nurse is above peers, with each one capped at 4. The top reasons become plain-language codes, for example "cancel rate more than 10 SD above peers (0.13 vs peer median 0.03)".
+**How a nurse is scored.** Each month, every measure in `user_activity_monthly` is compared with the other nurses in the same peer group (facility, unit, shift) as a z-score: how many standard deviations the nurse is from the mean of the others. The score adds up the measures where the nurse is above peers, with each one capped at 4. The top reasons become plain-language codes, for example "cancel rate more than 10 SD above peers (0.13 vs peer median 0.03)". When every peer has the same value, for example no unwitnessed wastes at all, any difference counts as the largest possible, and the code says so: "unwitnessed waste rate higher than every one of the peers (0.57; all peers 0.00)".
 
 Rules for what gets scored:
 - A nurse-month needs at least 20 pulls.
@@ -186,14 +186,18 @@ A baseline score uses the same method but compares every nurse with all nurses, 
 
 **Labels stay separate.** The injected labels are uploaded to their own volume in the `eval` schema (`generator/upload_labels.sh`). Only `src/eval/` reads them. `tests/test_label_isolation.py` fails if the pipeline, scoring, or snapshot code, or their job parameters, refer to labels.
 
-**Results** (days 1 to 150; months with at least one injected nurse, April to July; counts pooled over those months):
+**Results** (all 180 days, 2026-03-01 to 2026-08-27; the months with at least one injected nurse, April to August; counts pooled over those months; from `eval.metrics`):
 
 | Method | Top 5%: precision | Top 5%: recall | Top 10%: precision | Top 10%: recall |
 |---|---|---|---|---|
-| Peer-grouped | 0.333 (8 of 24) | 0.615 (8 of 13) | 0.208 (10 of 48) | 0.769 (10 of 13) |
-| Baseline (no peer groups) | 0.208 (5 of 24) | 0.385 (5 of 13) | 0.167 (8 of 48) | 0.615 (8 of 13) |
+| Peer-grouped | 0.367 (11 of 30) | 0.647 (11 of 17) | 0.200 (12 of 60) | 0.706 (12 of 17) |
+| Baseline (no peer groups) | 0.233 (7 of 30) | 0.412 (7 of 17) | 0.167 (10 of 60) | 0.588 (10 of 17) |
 
-Only 2 to 4 nurses per month carry an injected pattern. So the highest possible precision at the top 5% (6 nurses) is 0.54 pooled, and at the top 10% it is 0.27. The baseline loses mostly to ED nurses: their override and waste rates are high for ordinary reasons, and they look normal next to other ED nurses.
+How to read this:
+- **Ceiling.** Only 2 to 4 nurses per month carry an injected pattern. So the highest possible precision at the top 5% (6 nurses) is 0.57 pooled, and at the top 10% it is 0.28.
+- **Why the baseline does worse.** It mostly loses to ED nurses. Their override and waste rates are high for ordinary reasons, and they look normal next to other ED nurses.
+- **False positives.** Most come from small numbers. A nurse with one or two pulls after discharge, in a month when none of their peers had any, stands out sharply even though one event is weak evidence.
+
 
 ## Commands
 

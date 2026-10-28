@@ -6,6 +6,7 @@ of positive z-scores, each capped. A baseline score uses the same formula agains
 peer grouping. Scores are a screening aid for pharmacy review, not a determination.
 """
 
+import math
 import statistics
 from collections import defaultdict
 from dataclasses import dataclass
@@ -41,15 +42,23 @@ class ScoreConfig:
 
 
 def loo_z(values: list[float | None], min_peers: int) -> list[float | None]:
-    """Leave-one-out z for each value against the others. None where the value is missing or peers are too few."""
+    """Leave-one-out z for each value against the others. None where the value is missing or peers are too few.
+
+    When every other value is identical (SD 0), a value that differs is as far from peers as possible: z is +/- inf,
+    which the composite caps like any large z. Equal to the others gives 0.
+    """
     out: list[float | None] = []
     for i, x in enumerate(values):
         others = [v for j, v in enumerate(values) if j != i and v is not None]
         if x is None or len(others) < min_peers:
             out.append(None)
             continue
+        mean = statistics.mean(others)
         sd = statistics.stdev(others) if len(others) > 1 else 0.0
-        out.append(0.0 if sd == 0 else (x - statistics.mean(others)) / sd)
+        if sd == 0:
+            out.append(0.0 if x == mean else math.copysign(math.inf, x - mean))
+        else:
+            out.append((x - mean) / sd)
     return out
 
 
@@ -82,14 +91,13 @@ def _reasons(
     group, median = COMPARED_WITH[kind]
     top = sorted(((v, f) for f, v in z.items() if v is not None and v >= cfg.reason_min_z), reverse=True)
 
-    def size(v: float) -> str:
-        cap = cfg.reason_z_display_cap
-        return f"more than {cap:.0f} SD" if v > cap else f"{v:.1f} SD"
+    def reason(v: float, f: str) -> str:
+        if math.isinf(v):  # every peer had the same value
+            return f"{FEATURE_LABELS[f]} higher than every one of the {group} ({_fmt(f, value[f])}; all {group} {_fmt(f, ref[f])})"
+        size = f"more than {cfg.reason_z_display_cap:.0f} SD" if v > cfg.reason_z_display_cap else f"{v:.1f} SD"
+        return f"{FEATURE_LABELS[f]} {size} above {group} ({_fmt(f, value[f])} vs {median} {_fmt(f, ref[f])})"
 
-    return [
-        f"{FEATURE_LABELS[f]} {size(v)} above {group} ({_fmt(f, value[f])} vs {median} {_fmt(f, ref[f])})"
-        for v, f in top[: cfg.max_reasons]
-    ]
+    return [reason(v, f) for v, f in top[: cfg.max_reasons]]
 
 
 def _score_set(rows: list[dict[str, Any]], cfg: ScoreConfig, kind: str) -> list[dict[str, Any]]:
@@ -142,7 +150,8 @@ def score_month(rows: list[dict[str, Any]], cfg: ScoreConfig) -> list[dict[str, 
             "peer_reason_codes": p["reasons"],
             "baseline_score": b["score"],
             "baseline_reason_codes": b["reasons"],
-            "feature_z": {f: z for f, z in p["z"].items() if z is not None},
+            # Clipped for storage; +/-99 means the nurse differed from peers who all had the same value.
+            "feature_z": {f: max(-99.0, min(99.0, z)) for f, z in p["z"].items() if z is not None},
             "scored": True,
         }
 
