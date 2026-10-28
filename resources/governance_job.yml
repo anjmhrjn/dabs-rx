@@ -1,0 +1,21 @@
+resources:
+  jobs:
+    rx_governance_job:
+      name: rx-governance-job
+      # Creates the facility access table, mask function, and reporting views. Run after the first pipeline
+      # refresh, and again whenever sql/governance/ changes. Not part of rx_job: views don't need a refresh.
+      environments:
+        - environment_key: default
+          spec:
+            environment_version: "5"
+      tasks:
+        - task_key: apply_governance
+          environment_key: default
+          spark_python_task:
+            python_file: ../src/governance/apply_governance.py
+            parameters:
+              - --catalog=${var.catalog}
+              - --silver-schema=${resources.schemas.silver.name}
+              - --gold-schema=${resources.schemas.gold.name}
+              - --reporting-schema=${resources.schemas.reporting.name}
+              - --sql-dir=${workspace.file_path}/sql/governance
