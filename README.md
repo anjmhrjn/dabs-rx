@@ -6,7 +6,7 @@ A Databricks Asset Bundle that models controlled substance monitoring for a two-
 
 ## Status
 
-Checkpoint 5 (gold). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze, checked and flagged in silver, and summarized in gold report tables. Scoring and the dashboard come in later checkpoints.
+Checkpoint 6 (scoring and evaluation). The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 are loaded by the pipeline into bronze, checked and flagged in silver, and summarized in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
 
 ## Layout
 
@@ -162,6 +162,38 @@ A nurse's peer group is facility, unit, and shift at the time of each event.
 **On hand** is taken from the cabinet's own last count of the day, plus any movements after that count. No starting stock is assumed. Days on hand is cabinet stock divided by average daily use over the last 28 days (`usage_lookback_days`). Pharmacy central stock is not modeled, so these numbers describe what is in the cabinet.
 
 **Estimated spend** is units restocked times the NADAC unit cost, or the fallback cost, converted to the unit the cabinet dispenses (for example, per vial). It is an estimate, not an invoice amount.
+
+## Scoring and evaluation
+
+The job `rx_job` runs four tasks in order:
+
+| Task | Code | Output |
+|---|---|---|
+| `refresh_pipeline` | `src/pipeline/` | bronze, silver, gold |
+| `score_users` | `src/scoring/` | `gold.user_risk_monthly` |
+| `snapshot_audit` | `src/snapshot/` | `gold.monthly_audit_snapshot` |
+| `evaluate` | `src/eval/` | `eval.injected_labels`, `eval.metrics` |
+
+**How a nurse is scored.** Each month, every measure in `user_activity_monthly` is compared with the other nurses in the same peer group (facility, unit, shift) as a z-score: how many standard deviations the nurse is from the mean of the others. The score adds up the measures where the nurse is above peers, with each one capped at 4. The top reasons become plain-language codes, for example "cancel rate more than 10 SD above peers (0.13 vs peer median 0.03)".
+
+Rules for what gets scored:
+- A nurse-month needs at least 20 pulls.
+- The waste measures count only when the nurse had at least 5 wastes that month.
+
+A baseline score uses the same method but compares every nurse with all nurses, with no peer groups.
+
+**Review list.** The top 10% of nurses each month, with their reason codes, are appended to `monthly_audit_snapshot`. Rows are never updated or deleted. Delta time travel (`VERSION AS OF`) shows exactly what the list said on any earlier run.
+
+**Labels stay separate.** The injected labels are uploaded to their own volume in the `eval` schema (`generator/upload_labels.sh`). Only `src/eval/` reads them. `tests/test_label_isolation.py` fails if the pipeline, scoring, or snapshot code, or their job parameters, refer to labels.
+
+**Results** (days 1 to 150; months with at least one injected nurse, April to July; counts pooled over those months):
+
+| Method | Top 5%: precision | Top 5%: recall | Top 10%: precision | Top 10%: recall |
+|---|---|---|---|---|
+| Peer-grouped | 0.333 (8 of 24) | 0.615 (8 of 13) | 0.208 (10 of 48) | 0.769 (10 of 13) |
+| Baseline (no peer groups) | 0.208 (5 of 24) | 0.385 (5 of 13) | 0.167 (8 of 48) | 0.615 (8 of 13) |
+
+Only 2 to 4 nurses per month carry an injected pattern. So the highest possible precision at the top 5% (6 nurses) is 0.54 pooled, and at the top 10% it is 0.27. The baseline loses mostly to ED nurses: their override and waste rates are high for ordinary reasons, and they look normal next to other ED nurses.
 
 ## Commands
 
