@@ -32,9 +32,28 @@ def test_loo_z_compares_against_the_others() -> None:
     assert z[0] < 0
 
 
-def test_loo_z_handles_missing_too_few_peers_and_zero_sd() -> None:
+def test_loo_z_handles_missing_and_too_few_peers() -> None:
     assert loo_z([1.0, None, 2.0], min_peers=3) == [None, None, None]
-    assert loo_z([5.0, 5.0, 5.0, 9.0], min_peers=3)[3] == 0.0
+
+
+def test_loo_z_with_identical_peers() -> None:
+    z = loo_z([0.0, 0.0, 0.0, 0.0, 0.57], min_peers=3)
+    assert z[4] == float("inf")  # differs from peers who all match: as unusual as it gets
+    assert loo_z([0.0, 0.0, 0.0, 0.0], min_peers=3) == [0.0, 0.0, 0.0, 0.0]
+
+
+def test_identical_peers_reason_and_capped_score() -> None:
+    rows = [row(f"U{i}", unwitnessed_waste_rate=0.0, override_rate=0.02 + i * 0.001) for i in range(8)]
+    rows.append(row("X", unwitnessed_waste_rate=0.57, override_rate=0.0235))
+    cfg = ScoreConfig(features=("unwitnessed_waste_rate", "override_rate"))
+    top = score_month(rows, cfg)[0]
+    assert top["user_id"] == "X"
+    assert top["feature_z"]["unwitnessed_waste_rate"] == 99.0
+    assert top["peer_score"] == pytest.approx(4.0, abs=0.5)  # capped at 4, plus a small override z
+    assert (
+        top["peer_reason_codes"][0]
+        == "unwitnessed waste rate higher than every one of the peers (0.57; all peers 0.00)"
+    )
 
 
 def test_outlier_ranks_first_with_capped_score_and_reason() -> None:
