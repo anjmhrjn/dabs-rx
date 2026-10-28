@@ -11,6 +11,11 @@ variables:
     description: Unity Catalog catalog that holds every schema in this bundle.
     default: dabs-rx
 
+  warehouse_id:
+    description: SQL warehouse the dashboard runs on (Free Edition has one).
+    lookup:
+      warehouse: Serverless Starter Warehouse
+
   # Simulation window. Must match simulation.start_date and days in generator/config.yaml (a test checks this).
   window_start:
     description: First day of the simulated data, inclusive.

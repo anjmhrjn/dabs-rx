@@ -1,0 +1,11 @@
+resources:
+  dashboards:
+    rx_dashboard:
+      display_name: Rx Surveillance (synthetic data)
+      file_path: ../dashboards/rx_surveillance.lvdash.json
+      warehouse_id: ${var.warehouse_id}
+      # Dataset queries name reporting views without a catalog or schema; these fill them in per target.
+      dataset_catalog: ${var.catalog}
+      dataset_schema: ${resources.schemas.reporting.name}
+      # Queries run as the viewer, so the patient ID mask and facility filter apply to each person who opens it.
+      embed_credentials: false
