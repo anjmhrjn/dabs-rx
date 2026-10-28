@@ -1,0 +1,1769 @@
+{
+  "datasets": [
+    {
+      "name": "discrepancies",
+      "displayName": "Count discrepancies",
+      "queryLines": [
+        "SELECT report_date, facility_id, cabinet_id, display_name, dea_schedule, discrepancies, resolved, unresolved, net_variance_units, median_hours_to_resolve FROM daily_discrepancies"
+      ]
+    },
+    {
+      "name": "compliance",
+      "displayName": "Compliance events",
+      "queryLines": [
+        "SELECT report_date, CAST(date_trunc('MONTH', report_date) AS DATE) AS report_month, facility_id, unit_id, flag_type, events, users FROM daily_compliance_events"
+      ]
+    },
+    {
+      "name": "below_par",
+      "displayName": "Below-par pockets (latest day)",
+      "queryLines": [
+        "SELECT report_date, facility_id, unit_id, cabinet_id, drug_key, on_hand, restock_below, par_level, avg_daily_usage, days_on_hand FROM inventory_daily WHERE below_par AND report_date = (SELECT max(report_date) FROM inventory_daily)"
+      ]
+    },
+    {
+      "name": "shortages",
+      "displayName": "Shortage exposure",
+      "queryLines": [
+        "SELECT as_of_date, facility_id, display_name, dea_schedule, shortage_records, array_join(availability, ', ') AS availability, latest_update_date, on_hand_units, avg_daily_usage, days_on_hand FROM shortage_exposure"
+      ]
+    },
+    {
+      "name": "review_list",
+      "displayName": "Monthly review list",
+      "queryLines": [
+        "SELECT report_month, rank, user_id, facility_id, unit_id, shift, pulls, score, reasons FROM monthly_review_list"
+      ]
+    },
+    {
+      "name": "procurement",
+      "displayName": "Procurement",
+      "queryLines": [
+        "SELECT report_month, facility_id, dea_schedule, display_name, restocked_units, est_spend, cost_source FROM procurement_monthly"
+      ]
+    },
+    {
+      "name": "quarantine",
+      "displayName": "Quarantined rows",
+      "queryLines": [
+        "SELECT file_date, rule, rows FROM quarantine_summary"
+      ]
+    }
+  ],
+  "pages": [
+    {
+      "name": "daily",
+      "displayName": "Daily",
+      "layout": [
+        {
+          "widget": {
+            "name": "daily_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Controlled Substance Surveillance\n",
+                "**All data on this dashboard is synthetic.** It comes from a simulated two-hospital system (MAIN and COMM). No real patients, staff, or cabinets are shown.\n",
+                "Screening scores and flags are a review aid for pharmacy, not a finding of diversion. Patient IDs are hidden unless you are in the rx_privileged group, and you see only the facilities you have access to.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "daily_facility",
+            "queries": [
+              {
+                "name": "daily_facility_discrepancies",
+                "query": {
+                  "datasetName": "discrepancies",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "daily_facility_compliance",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "daily_facility_below_par",
+                "query": {
+                  "datasetName": "below_par",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "daily_facility_shortages",
+                "query": {
+                  "datasetName": "shortages",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "daily_facility_discrepancies"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "daily_facility_compliance"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "daily_facility_below_par"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "daily_facility_shortages"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Facility"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "daily_dates",
+            "queries": [
+              {
+                "name": "daily_dates_discrepancies",
+                "query": {
+                  "datasetName": "discrepancies",
+                  "fields": [
+                    {
+                      "name": "report_date",
+                      "expression": "`report_date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "daily_dates_compliance",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "report_date",
+                      "expression": "`report_date`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-date-range-picker",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "report_date",
+                    "displayName": "Report date",
+                    "queryName": "daily_dates_discrepancies"
+                  },
+                  {
+                    "fieldName": "report_date",
+                    "displayName": "Report date",
+                    "queryName": "daily_dates_compliance"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Report date"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "open_discrepancies",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "discrepancies",
+                  "fields": [
+                    {
+                      "name": "open_discrepancies",
+                      "expression": "SUM(`unresolved`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "open_discrepancies",
+                  "displayName": "Unresolved count discrepancies"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Unresolved count discrepancies"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "flagged_events",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "flagged_events",
+                      "expression": "SUM(`events`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "flagged_events",
+                  "displayName": "Flagged cabinet events"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Flagged cabinet events"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 5,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "below_par_pockets",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "below_par",
+                  "fields": [
+                    {
+                      "name": "below_par_pockets",
+                      "expression": "COUNT(`drug_key`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "below_par_pockets",
+                  "displayName": "Pockets below restock level today"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Pockets below restock level today"
+              }
+            }
+          },
+          "position": {
+            "x": 4,
+            "y": 5,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "discrepancy_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "discrepancies",
+                  "fields": [
+                    {
+                      "name": "report_date",
+                      "expression": "`report_date`"
+                    },
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "cabinet_id",
+                      "expression": "`cabinet_id`"
+                    },
+                    {
+                      "name": "display_name",
+                      "expression": "`display_name`"
+                    },
+                    {
+                      "name": "dea_schedule",
+                      "expression": "`dea_schedule`"
+                    },
+                    {
+                      "name": "discrepancies",
+                      "expression": "`discrepancies`"
+                    },
+                    {
+                      "name": "unresolved",
+                      "expression": "`unresolved`"
+                    },
+                    {
+                      "name": "net_variance_units",
+                      "expression": "`net_variance_units`"
+                    },
+                    {
+                      "name": "median_hours_to_resolve",
+                      "expression": "`median_hours_to_resolve`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "itemsPerPage": 25,
+              "condensed": true,
+              "withRowNumber": false,
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "report_date",
+                    "type": "date",
+                    "displayAs": "datetime",
+                    "visible": true,
+                    "order": 100000,
+                    "title": "Date",
+                    "allowSearch": false,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "dateTimeFormat": "YYYY-MM-DD"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100001,
+                    "title": "Facility",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "cabinet_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "title": "Cabinet",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "display_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100003,
+                    "title": "Drug",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "dea_schedule",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100004,
+                    "title": "Schedule",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "discrepancies",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100005,
+                    "title": "Discrepancies",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "unresolved",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100006,
+                    "title": "Unresolved",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "net_variance_units",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100007,
+                    "title": "Counted minus expected",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "median_hours_to_resolve",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100008,
+                    "title": "Hours to resolve (median)",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Count discrepancies",
+                "showDescription": true,
+                "description": "A blind count that did not match the cabinet's expected quantity. Unresolved ones need follow-up."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 8,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "compliance_by_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "report_date",
+                      "expression": "`report_date`"
+                    },
+                    {
+                      "name": "events_sum",
+                      "expression": "SUM(`events`)"
+                    },
+                    {
+                      "name": "flag_type",
+                      "expression": "`flag_type`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_date",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Date"
+                },
+                "y": {
+                  "fieldName": "events_sum",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Events"
+                },
+                "color": {
+                  "fieldName": "flag_type",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Flag"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Flagged events by day"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 6,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "below_par_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "below_par",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "cabinet_id",
+                      "expression": "`cabinet_id`"
+                    },
+                    {
+                      "name": "drug_key",
+                      "expression": "`drug_key`"
+                    },
+                    {
+                      "name": "on_hand",
+                      "expression": "`on_hand`"
+                    },
+                    {
+                      "name": "restock_below",
+                      "expression": "`restock_below`"
+                    },
+                    {
+                      "name": "avg_daily_usage",
+                      "expression": "`avg_daily_usage`"
+                    },
+                    {
+                      "name": "days_on_hand",
+                      "expression": "`days_on_hand`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "itemsPerPage": 25,
+              "condensed": true,
+              "withRowNumber": false,
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "facility_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100000,
+                    "title": "Facility",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "cabinet_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100001,
+                    "title": "Cabinet",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "drug_key",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "title": "Drug",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "on_hand",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100003,
+                    "title": "On hand",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "restock_below",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100004,
+                    "title": "Restock level",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "avg_daily_usage",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100005,
+                    "title": "Average daily use",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "days_on_hand",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100006,
+                    "title": "Days on hand",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Below restock level (latest day)"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 20,
+            "width": 3,
+            "height": 7
+          }
+        },
+        {
+          "widget": {
+            "name": "shortage_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "shortages",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "display_name",
+                      "expression": "`display_name`"
+                    },
+                    {
+                      "name": "dea_schedule",
+                      "expression": "`dea_schedule`"
+                    },
+                    {
+                      "name": "availability",
+                      "expression": "`availability`"
+                    },
+                    {
+                      "name": "on_hand_units",
+                      "expression": "`on_hand_units`"
+                    },
+                    {
+                      "name": "days_on_hand",
+                      "expression": "`days_on_hand`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "itemsPerPage": 25,
+              "condensed": true,
+              "withRowNumber": false,
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "facility_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100000,
+                    "title": "Facility",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "display_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100001,
+                    "title": "Drug",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "dea_schedule",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "title": "Schedule",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "availability",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100003,
+                    "title": "FDA availability",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "on_hand_units",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100004,
+                    "title": "Cabinet on hand",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "days_on_hand",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100005,
+                    "title": "Days on hand",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "On the FDA shortage list",
+                "showDescription": true,
+                "description": "Days on hand counts cabinet stock only. Central pharmacy stock is not modeled."
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 20,
+            "width": 3,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "monthly",
+      "displayName": "Monthly",
+      "layout": [
+        {
+          "widget": {
+            "name": "monthly_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Controlled Substance Surveillance\n",
+                "**All data on this dashboard is synthetic.** It comes from a simulated two-hospital system (MAIN and COMM). No real patients, staff, or cabinets are shown.\n",
+                "Screening scores and flags are a review aid for pharmacy, not a finding of diversion. Patient IDs are hidden unless you are in the rx_privileged group, and you see only the facilities you have access to.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "monthly_month",
+            "queries": [
+              {
+                "name": "monthly_month_review_list",
+                "query": {
+                  "datasetName": "review_list",
+                  "fields": [
+                    {
+                      "name": "report_month",
+                      "expression": "`report_month`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-single-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "report_month",
+                    "displayName": "Month",
+                    "queryName": "monthly_month_review_list"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Month"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "monthly_facility",
+            "queries": [
+              {
+                "name": "monthly_facility_review_list",
+                "query": {
+                  "datasetName": "review_list",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "monthly_facility_compliance",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              },
+              {
+                "name": "monthly_facility_procurement",
+                "query": {
+                  "datasetName": "procurement",
+                  "fields": [
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "filter-multi-select",
+              "encodings": {
+                "fields": [
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "monthly_facility_review_list"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "monthly_facility_compliance"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "displayName": "Facility",
+                    "queryName": "monthly_facility_procurement"
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Facility"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 2,
+            "height": 2
+          }
+        },
+        {
+          "widget": {
+            "name": "review_list_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "review_list",
+                  "fields": [
+                    {
+                      "name": "report_month",
+                      "expression": "`report_month`"
+                    },
+                    {
+                      "name": "rank",
+                      "expression": "`rank`"
+                    },
+                    {
+                      "name": "user_id",
+                      "expression": "`user_id`"
+                    },
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "unit_id",
+                      "expression": "`unit_id`"
+                    },
+                    {
+                      "name": "shift",
+                      "expression": "`shift`"
+                    },
+                    {
+                      "name": "pulls",
+                      "expression": "`pulls`"
+                    },
+                    {
+                      "name": "score",
+                      "expression": "`score`"
+                    },
+                    {
+                      "name": "reasons",
+                      "expression": "`reasons`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "itemsPerPage": 25,
+              "condensed": true,
+              "withRowNumber": false,
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "report_month",
+                    "type": "date",
+                    "displayAs": "datetime",
+                    "visible": true,
+                    "order": 100000,
+                    "title": "Month",
+                    "allowSearch": false,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "dateTimeFormat": "YYYY-MM-DD"
+                  },
+                  {
+                    "fieldName": "rank",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100001,
+                    "title": "Rank",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "user_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "title": "Nurse",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100003,
+                    "title": "Facility",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "unit_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100004,
+                    "title": "Unit",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "shift",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100005,
+                    "title": "Shift",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "pulls",
+                    "type": "integer",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100006,
+                    "title": "Pulls",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "score",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100007,
+                    "title": "Score",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "reasons",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100008,
+                    "title": "Reasons",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Monthly review list",
+                "showDescription": true,
+                "description": "Top 10% of nurses each month compared with peers on the same unit and shift. Use the table menu to download as CSV or Excel."
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 5,
+            "width": 6,
+            "height": 9
+          }
+        },
+        {
+          "widget": {
+            "name": "unit_trends",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "compliance",
+                  "fields": [
+                    {
+                      "name": "report_month",
+                      "expression": "`report_month`"
+                    },
+                    {
+                      "name": "events_sum",
+                      "expression": "SUM(`events`)"
+                    },
+                    {
+                      "name": "unit_id",
+                      "expression": "`unit_id`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Month"
+                },
+                "y": {
+                  "fieldName": "events_sum",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Flagged events"
+                },
+                "color": {
+                  "fieldName": "unit_id",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Unit"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Flagged events by unit"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 14,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "spend_by_schedule",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "procurement",
+                  "fields": [
+                    {
+                      "name": "report_month",
+                      "expression": "`report_month`"
+                    },
+                    {
+                      "name": "spend_sum",
+                      "expression": "SUM(`est_spend`)"
+                    },
+                    {
+                      "name": "dea_schedule",
+                      "expression": "`dea_schedule`"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "report_month",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "Month"
+                },
+                "y": {
+                  "fieldName": "spend_sum",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Estimated spend (USD)"
+                },
+                "color": {
+                  "fieldName": "dea_schedule",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Schedule"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Estimated restock spend by schedule",
+                "showDescription": true,
+                "description": "Restocked units times NADAC unit cost (fallback cost where NADAC has no price)."
+              }
+            }
+          },
+          "position": {
+            "x": 3,
+            "y": 14,
+            "width": 3,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "procurement_table",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "procurement",
+                  "fields": [
+                    {
+                      "name": "report_month",
+                      "expression": "`report_month`"
+                    },
+                    {
+                      "name": "facility_id",
+                      "expression": "`facility_id`"
+                    },
+                    {
+                      "name": "display_name",
+                      "expression": "`display_name`"
+                    },
+                    {
+                      "name": "dea_schedule",
+                      "expression": "`dea_schedule`"
+                    },
+                    {
+                      "name": "restocked_units",
+                      "expression": "`restocked_units`"
+                    },
+                    {
+                      "name": "est_spend",
+                      "expression": "`est_spend`"
+                    },
+                    {
+                      "name": "cost_source",
+                      "expression": "`cost_source`"
+                    }
+                  ],
+                  "disaggregated": true
+                }
+              }
+            ],
+            "spec": {
+              "version": 1,
+              "widgetType": "table",
+              "itemsPerPage": 25,
+              "condensed": true,
+              "withRowNumber": false,
+              "encodings": {
+                "columns": [
+                  {
+                    "fieldName": "report_month",
+                    "type": "date",
+                    "displayAs": "datetime",
+                    "visible": true,
+                    "order": 100000,
+                    "title": "Month",
+                    "allowSearch": false,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "dateTimeFormat": "YYYY-MM-DD"
+                  },
+                  {
+                    "fieldName": "facility_id",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100001,
+                    "title": "Facility",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "display_name",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100002,
+                    "title": "Drug",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "dea_schedule",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100003,
+                    "title": "Schedule",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  },
+                  {
+                    "fieldName": "restocked_units",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100004,
+                    "title": "Units restocked",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "est_spend",
+                    "type": "float",
+                    "displayAs": "number",
+                    "visible": true,
+                    "order": 100005,
+                    "title": "Estimated spend (USD)",
+                    "allowSearch": false,
+                    "alignContent": "right",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ],
+                    "numberFormat": "0.00"
+                  },
+                  {
+                    "fieldName": "cost_source",
+                    "type": "string",
+                    "displayAs": "string",
+                    "visible": true,
+                    "order": 100006,
+                    "title": "Cost source",
+                    "allowSearch": true,
+                    "alignContent": "left",
+                    "booleanValues": [
+                      "false",
+                      "true"
+                    ]
+                  }
+                ]
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Procurement by drug"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 20,
+            "width": 6,
+            "height": 7
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    },
+    {
+      "name": "data_quality",
+      "displayName": "Data quality",
+      "layout": [
+        {
+          "widget": {
+            "name": "quality_header",
+            "multilineTextboxSpec": {
+              "lines": [
+                "## Controlled Substance Surveillance\n",
+                "**All data on this dashboard is synthetic.** It comes from a simulated two-hospital system (MAIN and COMM). No real patients, staff, or cabinets are shown.\n",
+                "Screening scores and flags are a review aid for pharmacy, not a finding of diversion. Patient IDs are hidden unless you are in the rx_privileged group, and you see only the facilities you have access to.\n",
+                "Rows that fail a data quality rule are kept in quarantine with the rule name, not dropped.\n"
+              ]
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 0,
+            "width": 6,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "quarantined_rows",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "quarantine",
+                  "fields": [
+                    {
+                      "name": "quarantined_rows",
+                      "expression": "SUM(`rows`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 2,
+              "widgetType": "counter",
+              "encodings": {
+                "value": {
+                  "fieldName": "quarantined_rows",
+                  "displayName": "Quarantined rows"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Quarantined rows"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 3,
+            "width": 2,
+            "height": 3
+          }
+        },
+        {
+          "widget": {
+            "name": "quarantine_by_rule",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "quarantine",
+                  "fields": [
+                    {
+                      "name": "rule",
+                      "expression": "`rule`"
+                    },
+                    {
+                      "name": "rows_sum",
+                      "expression": "SUM(`rows`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "bar",
+              "encodings": {
+                "x": {
+                  "fieldName": "rule",
+                  "scale": {
+                    "type": "categorical"
+                  },
+                  "displayName": "Rule"
+                },
+                "y": {
+                  "fieldName": "rows_sum",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Rows"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Quarantined rows by rule"
+              }
+            }
+          },
+          "position": {
+            "x": 2,
+            "y": 3,
+            "width": 4,
+            "height": 6
+          }
+        },
+        {
+          "widget": {
+            "name": "quarantine_by_day",
+            "queries": [
+              {
+                "name": "main_query",
+                "query": {
+                  "datasetName": "quarantine",
+                  "fields": [
+                    {
+                      "name": "file_date",
+                      "expression": "`file_date`"
+                    },
+                    {
+                      "name": "rows_sum",
+                      "expression": "SUM(`rows`)"
+                    }
+                  ],
+                  "disaggregated": false
+                }
+              }
+            ],
+            "spec": {
+              "version": 3,
+              "widgetType": "line",
+              "encodings": {
+                "x": {
+                  "fieldName": "file_date",
+                  "scale": {
+                    "type": "temporal"
+                  },
+                  "displayName": "File date"
+                },
+                "y": {
+                  "fieldName": "rows_sum",
+                  "scale": {
+                    "type": "quantitative"
+                  },
+                  "displayName": "Rows"
+                }
+              },
+              "frame": {
+                "showTitle": true,
+                "title": "Quarantined rows by file date"
+              }
+            }
+          },
+          "position": {
+            "x": 0,
+            "y": 9,
+            "width": 6,
+            "height": 6
+          }
+        }
+      ],
+      "pageType": "PAGE_TYPE_CANVAS"
+    }
+  ],
+  "uiSettings": {
+    "theme": {
+      "widgetHeaderAlignment": "ALIGNMENT_UNSPECIFIED"
+    }
+  }
+}
