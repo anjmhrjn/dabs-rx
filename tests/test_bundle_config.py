@@ -9,7 +9,7 @@ from generator.common import REPO_ROOT, load_config
 
 def bundle_vars() -> dict:
     with (REPO_ROOT / "databricks.yml").open() as f:
-        return {k: v["default"] for k, v in yaml.safe_load(f)["variables"].items()}
+        return {k: v.get("default") for k, v in yaml.safe_load(f)["variables"].items()}
 
 
 def test_window_matches_simulator() -> None:
