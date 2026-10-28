@@ -9,11 +9,11 @@ from generator.common import REPO_ROOT
 FORBIDDEN = re.compile(
     r"eval_schema|eval-schema|injected_labels|labels[-_]path|data/labels|rx\.eval|schemas\.eval|volumes\.labels"
 )
-NO_LABELS_DIRS = ["src/pipeline", "src/scoring", "src/snapshot"]
+NO_LABELS_DIRS = ["src/pipeline", "src/scoring", "src/snapshot", "src/governance", "sql"]
 
 
-def test_pipeline_scoring_and_snapshot_code_never_reference_labels() -> None:
-    files = [p for d in NO_LABELS_DIRS for p in (REPO_ROOT / d).rglob("*.py")]
+def test_pipeline_scoring_snapshot_and_governance_code_never_reference_labels() -> None:
+    files = [p for d in NO_LABELS_DIRS for p in (REPO_ROOT / d).rglob("*") if p.suffix in (".py", ".sql")]
     assert files
     offenders = {str(p.relative_to(REPO_ROOT)): FORBIDDEN.findall(p.read_text()) for p in files}
     assert not {k: v for k, v in offenders.items() if v}
