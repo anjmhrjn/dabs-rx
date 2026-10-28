@@ -1,224 +1,193 @@
 # dabs-rx: Controlled Substance Surveillance Lakehouse
 
-> **All data in this project is synthetic.** No real patients, staff, cabinets, or hospitals are represented. Names and IDs are generated.
+> **All data in this project is synthetic.** No real patients, staff, cabinets, or hospitals are represented. Names and IDs are generated. Only the drug reference data (NDCs, DEA schedules, costs, FDA shortages) comes from public sources.
 
-A Databricks Asset Bundle that models controlled substance monitoring for a two-hospital inpatient pharmacy, using synthetic data. It ingests simulated automated dispensing cabinet (ADC) activity, flags compliance events, scores users against peer groups for diversion risk, tracks inventory and shortage exposure, and serves daily and monthly reports on an AI/BI dashboard. It runs on Databricks Free Edition.
+## What this models
 
-## Status
+An inpatient pharmacy has to account for every controlled substance that leaves an automated dispensing cabinet (ADC). This project builds the reporting for that job on a synthetic two-hospital system. It is a Databricks Asset Bundle that runs on Databricks Free Edition.
 
-Checkpoint 8 (governance). All 180 days are loaded. The local generator builds the formulary and shortage files and simulates 180 days of synthetic hospital activity. Days 1 to 150 were loaded first and days 151 to 180 second, to show that each run reads only new files. Reporting views mask patient IDs and limit rows by facility. The pipeline checks and flags the data in silver and summarizes it in gold. A job then scores each nurse against peers, saves the monthly review list, and measures how well the score finds the injected patterns. The dashboard comes in a later checkpoint.
+- **Controlled substance monitoring.** It catches count discrepancies and flags events a pharmacist should review: overrides, unwitnessed or late wastes, and pulls with no active order or after the patient left.
+- **Diversion surveillance.** It compares each nurse every month with peers on the same unit and shift. It produces a ranked review list with plain-language reasons, such as "waste ratio more than 10 SD above peers (0.31 vs peer median 0.05)".
+- **Inventory and shortage exposure.** It reports cabinet stock, days on hand, and pockets below their restock level. It also shows which formulary items are on the current FDA shortage list.
+- **Audit trail.** Every monthly review list is saved and never changed, so anyone can see what the report showed on a past date.
 
-## Layout
+Daily and monthly reports appear on an AI/BI dashboard. Scores are a screening aid for pharmacy review, not a finding of diversion.
 
-| Path | Purpose |
-|---|---|
-| `databricks.yml` | Bundle root, `catalog` variable, `dev` and `prod` targets |
-| `resources/` | Schemas, landing volume, pipeline, job, and later the dashboard |
-| `generator/` | Local scripts that build the synthetic data and reference files |
-| `src/` | Pipeline, scoring, snapshot, and evaluation code |
-| `sql/governance/` | Facility access table, ID mask, facility filter, and reporting views |
-| `tests/` | Local tests (`uv run pytest`) |
+## Architecture
 
-## Schemas
-
-Each target gets five schemas in the `catalog` variable's catalog: `rx_bronze`, `rx_silver`, `rx_gold`, `rx_eval`, `rx_reporting`. The `dev` target uses development mode, which adds a `dev_<user>_` prefix to each name, so dev and prod can share one workspace.
-
-## Reference data
-
-The formulary and shortage list come from public sources. Patients, staff, and cabinet activity are synthetic.
-
-| Source | Used for |
-|---|---|
-| openFDA NDC directory (`api.fda.gov/drug/ndc.json`) | NDC and DEA schedule for each formulary item |
-| openFDA drug shortages (`api.fda.gov/drug/shortages.json`) | Which formulary items are on the current FDA shortage list |
-| NADAC, CMS Medicaid (`data.medicaid.gov`) | Unit cost per tablet or mL |
-
-The fetch runs on a local machine, not on Databricks, because Free Edition limits outbound internet access. The files are uploaded to the landing volume later.
-
-```bash
-uv run python -m generator.fetch_reference   # network: raw responses to data/reference/
-uv run python -m generator.build_formulary   # offline: formulary.csv and shortages.csv
+```mermaid
+flowchart LR
+  subgraph local["Local machine"]
+    pub["openFDA NDC and shortages, NADAC"] --> ref["fetch_reference.py<br/>build_formulary.py"]
+    sim["simulate.py<br/>synthetic hospital"]
+    ref --> data[("data/")]
+    sim --> data
+  end
+  data -- "upload.sh<br/>one file per day" --> landing[("landing volume")]
+  data -- "upload_labels.sh" --> labels[("eval labels volume")]
+  subgraph pipe["Lakeflow pipeline, serverless"]
+    landing --> bronze["bronze<br/>Auto Loader, reference tables"]
+    bronze --> silver["silver<br/>quality rules, quarantine,<br/>compliance flags, SCD2 staff"]
+    silver --> gold["gold<br/>daily and monthly marts"]
+  end
+  subgraph job["rx_job"]
+    gold --> score["score_users"] --> snap["snapshot_audit"] --> evalt["evaluate"]
+  end
+  labels --> evalt
+  gold --> views["reporting views<br/>patient ID mask, facility filter"]
+  score --> views
+  snap --> views
+  views --> dash["AI/BI dashboard"]
 ```
 
-The formulary has 20 controlled substances across Schedules II to V, defined in `generator/config.yaml`. For each item, the build picks one NDC from openFDA. It prefers a package with a NADAC generic price, then any NADAC price, then the lowest NDC. Items with no NADAC price get a seeded fallback cost and `cost_source = 'fallback'`. NADAC is an outpatient retail benchmark, so costs are an estimate of hospital acquisition cost, not a contract price. Both sources update weekly, so a later fetch can pick different NDCs or costs. `data/reference/manifest.json` records the fetch date and NADAC dataset used.
+## Results
 
-## Synthetic data
+How well the monthly review list finds the nurses with injected diversion-like patterns. The data covers all 180 days, 2026-03-01 to 2026-08-27. Counts are pooled over the months that have at least one injected nurse (April to August), and the numbers come from `eval.metrics`.
 
-`generator/simulate.py` builds a synthetic two-hospital system and writes what its systems would send to the lakehouse. Every patient, staff member, and cabinet event is made up. Settings are in the `simulation` section of `generator/config.yaml`, and a fixed seed gives the same files every run.
+| Method | Top 5%: precision | Top 5%: recall | Top 10%: precision | Top 10%: recall |
+|---|---|---|---|---|
+| Peer-grouped (facility, unit, shift) | 0.367 (11 of 30) | 0.647 (11 of 17) | 0.200 (12 of 60) | 0.706 (12 of 17) |
+| Baseline (all nurses together) | 0.233 (7 of 30) | 0.412 (7 of 17) | 0.167 (10 of 60) | 0.588 (10 of 17) |
 
-| | |
+How to read this:
+- **Ceiling.** Only 2 to 4 of the 120 nurses carry an injected pattern in any month. So the best possible pooled precision is 0.57 at the top 5% (6 nurses a month) and 0.28 at the top 10% (12 nurses).
+- **Why the baseline does worse.** Many of its top spots go to ED nurses. They override and waste more for ordinary reasons (doses given before pharmacist verification, partial vials), and they look normal next to other ED nurses.
+- **False positives.** Most come from small numbers. One or two pulls after discharge, in a month when no peer had any, stand out sharply even though one event is weak evidence.
+
+## Free Edition design decisions
+
+| Constraint | What this project does |
 |---|---|
-| Facilities | `MAIN` (Med/Surg A, Med/Surg B, ED) and `COMM` (Med/Surg A, Behavioral Health) |
-| Cabinets | 8 automated dispensing cabinets, 1 or 2 per unit |
-| Staff | 120 nurses with a home unit and a day or night shift, 10 of whom transfer once. Also 6 pharmacists and 6 pharmacy techs. |
-| Volume | About 3,000 admissions and 186,000 cabinet events over 180 days (2026-03-01 to 2026-08-27) |
+| Outbound internet is limited to trusted domains | openFDA and NADAC are fetched on a local machine (`generator/`) and uploaded as files. Nothing on Databricks calls an external API. |
+| One active pipeline per pipeline type | One serverless pipeline builds bronze, silver, and gold. Scoring, the audit snapshot, and evaluation run as job tasks, not as a second pipeline. |
+| Serverless compute, Python and SQL only | Job tasks use serverless environments. There are no cluster specs, and no RDDs or caching. |
+| One 2X-Small SQL warehouse | Dashboard datasets read small, pre-aggregated reporting views. There are no heavy joins at view time. |
+| At most 5 concurrent job tasks | `rx_job` has 4 tasks that run in sequence. |
+| Daily compute quota | The synthetic data is small (about 186,000 cabinet events). A full run takes about 6 minutes. |
+| One workspace | `dev` and `prod` live in the same workspace. Development mode adds a `dev_<user>_` prefix to every schema. |
 
-Each source is written as one CSV per day under `data/landing/<source>/`, so files can be loaded a day at a time:
+## Reproduce
 
-| Source | What it holds |
+You need Python 3.11 with `uv`, the Databricks CLI (v1.8 or later) with a profile for your workspace, and a Unity Catalog catalog. The catalog name goes in the `catalog` variable in `databricks.yml`.
+
+```bash
+uv sync && uv run pytest                          # local tests, no Databricks needed
+
+# 1. Build data locally
+uv run python -m generator.fetch_reference        # network: openFDA, NADAC
+uv run python -m generator.build_formulary        # 20-item controlled substance formulary
+uv run python -m generator.simulate               # 180 days of synthetic activity into data/
+
+# 2. Deploy and load
+export DATABRICKS_CONFIG_PROFILE=<profile>
+databricks bundle deploy -t dev
+generator/upload.sh 1 150                         # first 150 days
+generator/upload_labels.sh                        # answer key, eval schema only
+databricks bundle run rx_job -t dev               # pipeline, scores, snapshot, eval
+databricks bundle run rx_governance_job -t dev    # access table, ID mask, reporting views
+
+# 3. Incremental load
+generator/upload.sh 151 180
+databricks bundle run rx_job -t dev               # reads only the 30 new days
+```
+
+Then open the dashboard "Rx Surveillance (synthetic data)" from `databricks bundle summary -t dev`. To see patient IDs, add yourself to the workspace group `rx_privileged`.
+
+A fixed seed makes the simulator output the same on every run. The reference fetch is the exception: openFDA and NADAC change weekly, and `data/reference/manifest.json` records which fetch was used.
+
+## Limitations
+
+- **Simpler than real diversion.** The injected patterns are cleaner than real diversion. Real cases are rarer and change over time, and people who divert adapt to monitoring. The precision and recall above describe this simulation, not a real hospital.
+- **A screening aid.** Rules and z-scores point a pharmacist to records worth reviewing. They do not show that anyone diverted anything.
+- **Small counts are noisy.** Several of the measured rates come from a handful of events a month, so a nurse can rank high from one or two events.
+- **Cabinet-only stock.** Days on hand uses cabinet stock only, because central pharmacy stock is not modeled.
+- **Estimated costs.** Spend uses NADAC, an outpatient retail benchmark, or a seeded fallback cost. It is not a contract price.
+- **Single-user access checks.** Access controls were checked with one user by changing that user's own group membership and facility access. See `docs/design_notes.md`.
+
+## How it works
+
+### Reference data
+| Source | Used for |
 |---|---|
-| `adc_events` | Cabinet transactions: `PULL`, `OVERRIDE`, `WASTE`, `RETURN`, `CANCEL`, `RESTOCK`, `COUNT`, `DISCREPANCY_RESOLVED` |
-| `adt_events` | Admit, transfer, and discharge events |
-| `order_events` | Controlled substance orders: new, pharmacist verified, discontinued |
-| `staff_assignments` | Each staff member's unit and shift. Day 1 has everyone; later files hold only transfers. |
+| openFDA NDC directory | NDC and DEA schedule for each formulary item |
+| openFDA drug shortages | Which formulary items are on the current FDA shortage list |
+| NADAC (CMS Medicaid) | Unit cost per tablet or mL |
 
-Timestamps are local facility time with no time zone. Static tables (`units.csv`, `cabinets.csv`, `cabinet_par.csv`, `dispense_units.csv`) go to `data/reference/`.
+The formulary has 20 controlled substances across Schedules II to V, defined in `generator/config.yaml`. For each item, the build picks one NDC from openFDA. It prefers a package with a NADAC generic price, then any NADAC price, then the lowest NDC. Items with no NADAC price get a seeded fallback cost, marked `cost_source = 'fallback'`.
 
-**Diversion-like patterns.** About 3% of nurses (4 of 120) get one or two injected patterns starting partway through the window:
+### Synthetic hospital
+`generator/simulate.py` writes what a hospital's systems would send to the lakehouse. It produces one CSV per day for each of four feeds:
+- `adc_events`: cabinet transactions (`PULL`, `OVERRIDE`, `WASTE`, `RETURN`, `CANCEL`, `RESTOCK`, `COUNT`, `DISCREPANCY_RESOLVED`)
+- `adt_events`: admit, transfer, discharge
+- `order_events`: new, verified, and discontinued orders
+- `staff_assignments`: each staff member's unit and shift
+
+The simulated hospital:
+- **Facilities:** `MAIN` (Med/Surg A, Med/Surg B, ED) and `COMM` (Med/Surg A, Behavioral Health)
+- **Cabinets:** 8 automated dispensing cabinets
+- **Staff:** 120 nurses, 10 of whom transfer once; 6 pharmacists; 6 pharmacy techs
+- **Volume:** about 3,000 admissions over 180 days
+
+**Injected patterns.** 4 nurses (3%) get one or two diversion-like patterns starting partway through the window:
 - high waste ratio
 - unwitnessed waste
 - the same witness on most wastes
 - long delay between pull and waste
-- pulls with no order on file
-- pulls after the patient was discharged or transferred
-- a high pull-then-cancel rate
-
-The answer key is in `data/labels/` and is read only by the evaluation step.
-
-**Benign differences that are not diversion:**
-- ED nurses override and waste far more often, because ED doses are often given before pharmacist verification and come from vials.
-- Night shift has more PRN volume.
-- Four high-acuity nurses pull about 1.7 times the median while keeping normal ratios.
-- Every flag has a small base rate for everyone.
-
-A screening method has to compare nurses with their peers to get past these.
-
-**Bad rows.** 0.5% of cabinet rows are deliberately broken, each with one defect: a missing user or cabinet, a negative quantity, a timestamp outside the window, an unknown NDC, or an unknown cabinet. These exercise the pipeline's data quality checks. Counts per defect are in `data/sim_manifest.json`.
-
-```bash
-uv run python -m generator.simulate            # full 180 days into data/
-uv run python -m generator.simulate --days 14  # quick look
-```
-
-## Load to Databricks
-
-`generator/upload.sh <first_day> <last_day>` copies the simulated daily files for that day range, plus the reference files, into the bundle's landing volume. Days are numbered from 1, starting 2026-03-01. The script reads the volume path from the bundle, so it works for either target. It never uploads `data/labels/` and never overwrites a daily file that is already there.
-
-```bash
-databricks bundle deploy -t dev
-DATABRICKS_CONFIG_PROFILE=<profile> generator/upload.sh 1 150    # first load
-databricks bundle run rx_job -t dev
-DATABRICKS_CONFIG_PROFILE=<profile> generator/upload.sh 151 180  # later, incremental load
-databricks bundle run rx_job -t dev
-```
-
-The pipeline (`resources/pipeline.yml`) runs on serverless compute. Its bronze layer (`src/pipeline/bronze.py`) has two kinds of tables:
-- **Streaming tables** for the four daily feeds, read with Auto Loader. Each run reads only files it has not seen before.
-- **Batch tables** (`ref_*`) for the reference files.
-
-Bronze keeps every source column as text. It adds `_ingested_at` and `_source_file`, and Auto Loader adds `_rescued_data`. Values are checked and typed in silver.
-
-## Silver: data quality and compliance flags
-
-Silver (`src/pipeline/silver.py`) applies two different kinds of rules.
-
-**Data quality rules** catch bad data. The rules are defined once in `src/pipeline/rules.py`:
-- missing event, user, or cabinet ID
-- negative quantity
-- timestamp outside the simulation window
-- unknown NDC or cabinet
-
-They run as pipeline expectations, so pass and fail counts appear in the pipeline event log. A row that fails goes to `adc_events_quarantine` with the names of the rules it failed. No row is dropped without a record.
-
-**Compliance flags** mark valid events that a pharmacist may want to review. They are columns on `adc_events`, and the events stay in the table, because they really happened.
-
-| Flag | Meaning |
-|---|---|
-| `is_override` | Pulled before a pharmacist verified the order |
-| `is_unwitnessed_waste` | Waste recorded with no witness |
-| `is_delayed_waste` | Waste more than `waste_delay_minutes` (default 30) after the pull |
-| `is_pull_without_active_order` | No order on file for that drug, or the order was not active at the time |
-| `is_pull_after_discharge` | Pulled after the patient was discharged |
-| `is_pull_after_transfer` | Pulled on a unit the patient had already left |
-
-Each event also carries the nurse's unit and shift at the time of the event (`assigned_unit_id`, `assigned_shift`). These come from `staff_unit_scd2`, a full history of staff assignments (SCD Type 2), so a nurse who transfers is compared with the right peers before and after the move.
-
-Thresholds and the simulation window are bundle variables in `databricks.yml`.
-
-## Gold: report tables
-
-Gold (`src/pipeline/gold.py`) builds the tables that reports and scoring read. All are materialized views over silver.
-
-| Table | One row per | What it answers |
-|---|---|---|
-| `daily_discrepancies` | day, cabinet, drug | Which count discrepancies happened, and which are still unresolved |
-| `daily_compliance_events` | day, unit, flag type | How many overrides, unwitnessed wastes, late wastes, and pulls without an order or after the patient left |
-| `user_activity_monthly` | nurse, month, peer group | Each nurse's monthly activity (see the list below) |
-| `inventory_daily` | day, cabinet, drug | End-of-day on hand, average daily use, days on hand, and whether the pocket is below its restock level |
-| `shortage_exposure` | drug, facility | Formulary items on the current FDA shortage list, with on hand and days on hand |
-| `procurement_monthly` | month, facility, drug | Units restocked and estimated spend |
-
-The monthly activity measures in `user_activity_monthly` are:
-- pulls per patient-day
-- waste ratio
-- unwitnessed wastes
-- median minutes to waste
-- override and cancel rates
+- pulls with no order
 - pulls after discharge or transfer
-- witness concentration: the share of wastes signed by the same witness
+- a high cancel rate
 
-A nurse's peer group is facility, unit, and shift at the time of each event.
+**Benign differences** make the problem harder:
+- ED nurses override and waste more for ordinary reasons.
+- Night shift has more volume.
+- Four high-acuity nurses pull about 1.7 times the median.
 
-**On hand** is taken from the cabinet's own last count of the day, plus any movements after that count. No starting stock is assumed. Days on hand is cabinet stock divided by average daily use over the last 28 days (`usage_lookback_days`). Pharmacy central stock is not modeled, so these numbers describe what is in the cabinet.
+**Corrupt rows.** 0.5% of cabinet rows are deliberately broken, to test the quality checks.
 
-**Estimated spend** is units restocked times the NADAC unit cost, or the fallback cost, converted to the unit the cabinet dispenses (for example, per vial). It is an estimate, not an invoice amount.
+The answer key (`data/labels/`) is uploaded only to the eval schema. `tests/test_label_isolation.py` fails if the pipeline, scoring, snapshot, or governance code refers to it.
 
-## Scoring and evaluation
+### Pipeline
+- **Bronze:** Auto Loader streaming tables for the four feeds, with every column kept as text, plus `_ingested_at` and `_source_file`. Reference files load as batch tables. Each run reads only new files.
+- **Silver:**
+  - Data quality rules run as pipeline expectations: missing IDs, negative quantities, timestamps outside the window, unknown NDC or cabinet. Failing rows go to `adc_events_quarantine` with the rule names, so none is dropped without a record.
+  - Compliance flags are separate columns on valid events, because those events really happened.
+  - `staff_unit_scd2` keeps each nurse's unit and shift history, so events are compared with the right peers after a transfer.
+- **Gold:** `daily_discrepancies`, `daily_compliance_events`, `user_activity_monthly`, `inventory_daily`, `shortage_exposure`, `procurement_monthly`.
 
-The job `rx_job` runs four tasks in order:
+### Scoring, review list, and evaluation
+- **`score_users`:** For each nurse and month, every measure is compared with the other nurses in the same peer group, as a leave-one-out z-score. The score adds the measures where the nurse is above peers, capping each at 4.
+  - A nurse-month needs at least 20 pulls.
+  - The waste measures need at least 5 wastes.
+  - A baseline uses the same method without peer groups.
+- **`snapshot_audit`:** Appends the top 10% of nurses each month, with reasons, to `monthly_audit_snapshot`. Rows are never changed, and `VERSION AS OF` shows any past list.
+- **`evaluate`:** Loads the labels and writes precision and recall at the top 5% and 10% to `eval.metrics`.
 
-| Task | Code | Output |
-|---|---|---|
-| `refresh_pipeline` | `src/pipeline/` | bronze, silver, gold |
-| `score_users` | `src/scoring/` | `gold.user_risk_monthly` |
-| `snapshot_audit` | `src/snapshot/` | `gold.monthly_audit_snapshot` |
-| `evaluate` | `src/eval/` | `eval.injected_labels`, `eval.metrics` |
+### Governance
+The dashboard reads only views in the `reporting` schema (`sql/governance/`, applied by `rx_governance_job`).
+- **Patient IDs.** Patient and admission IDs are shown only to members of the workspace group `rx_privileged`. Everyone else sees a short hash.
+- **Facilities.** Each view shows only the facilities listed for the reader in `reporting.user_facility_access`.
+- **Per-viewer queries.** The dashboard runs queries as the viewer, so these rules apply to each person who opens it.
 
-**How a nurse is scored.** Each month, every measure in `user_activity_monthly` is compared with the other nurses in the same peer group (facility, unit, shift) as a z-score: how many standard deviations the nurse is from the mean of the others. The score adds up the measures where the nurse is above peers, with each one capped at 4. The top reasons become plain-language codes, for example "cancel rate more than 10 SD above peers (0.13 vs peer median 0.03)". When every peer has the same value, for example no unwitnessed wastes at all, any difference counts as the largest possible, and the code says so: "unwitnessed waste rate higher than every one of the peers (0.57; all peers 0.00)".
+`docs/design_notes.md` explains why views are used rather than table-level masks, and records the access checks.
 
-Rules for what gets scored:
-- A nurse-month needs at least 20 pulls.
-- The waste measures count only when the nurse had at least 5 wastes that month.
+### Dashboard
+`dashboards/rx_surveillance.lvdash.json` is generated by `dashboards/build_dashboard.py` and deployed by the bundle. It has three pages:
+- **Daily:** discrepancies, compliance events, items below their restock level, and shortage items.
+- **Monthly:** the review list with reasons, which can be downloaded as CSV or Excel; flagged events by unit; and estimated spend.
+- **Data quality:** quarantined rows by rule and by day.
 
-A baseline score uses the same method but compares every nurse with all nurses, with no peer groups.
+`docs/user_guide.md` explains the dashboard for pharmacy staff, and `docs/data_dictionary.md` lists every reporting column.
 
-**Review list.** The top 10% of nurses each month, with their reason codes, are appended to `monthly_audit_snapshot`. Rows are never updated or deleted. Delta time travel (`VERSION AS OF`) shows exactly what the list said on any earlier run.
+## Repository layout
 
-**Labels stay separate.** The injected labels are uploaded to their own volume in the `eval` schema (`generator/upload_labels.sh`). Only `src/eval/` reads them. `tests/test_label_isolation.py` fails if the pipeline, scoring, or snapshot code, or their job parameters, refer to labels.
-
-**Results** (all 180 days, 2026-03-01 to 2026-08-27; the months with at least one injected nurse, April to August; counts pooled over those months; from `eval.metrics`):
-
-| Method | Top 5%: precision | Top 5%: recall | Top 10%: precision | Top 10%: recall |
-|---|---|---|---|---|
-| Peer-grouped | 0.367 (11 of 30) | 0.647 (11 of 17) | 0.200 (12 of 60) | 0.706 (12 of 17) |
-| Baseline (no peer groups) | 0.233 (7 of 30) | 0.412 (7 of 17) | 0.167 (10 of 60) | 0.588 (10 of 17) |
-
-How to read this:
-- **Ceiling.** Only 2 to 4 nurses per month carry an injected pattern. So the highest possible precision at the top 5% (6 nurses) is 0.57 pooled, and at the top 10% it is 0.28.
-- **Why the baseline does worse.** It mostly loses to ED nurses. Their override and waste rates are high for ordinary reasons, and they look normal next to other ED nurses.
-- **False positives.** Most come from small numbers. A nurse with one or two pulls after discharge, in a month when none of their peers had any, stands out sharply even though one event is weak evidence.
-
-
-## Governance
-
-Readers see the data only through views in the `reporting` schema (`sql/governance/`, applied by `rx_governance_job`).
-- **Patient IDs.** Patient and admission IDs are shown only to members of the workspace group `rx_privileged`. Everyone else sees a short hash, such as `h_00ab325d8e51`, so they can still count and group by patient.
-- **Facilities.** Each view shows only the facilities listed for the reader in `reporting.user_facility_access`. Change access by adding or deleting rows in that table.
-
-The mask and filter are built into the views, not attached to the tables. On this workspace, table-level masks would have to live in the pipeline definition, and they would block the time travel the audit snapshot relies on. `docs/design_notes.md` explains the choice and records the access checks: what one user saw inside and outside the group, and with access to one facility or both.
-
-```bash
-databricks bundle run rx_governance_job -t dev   # after the first pipeline run, and when sql/governance/ changes
-```
-
-## Commands
-
-```bash
-uv sync
-uv run pytest
-uv run python -m generator.fetch_reference
-uv run python -m generator.build_formulary
-uv run python -m generator.simulate
-databricks bundle validate -t dev --profile <profile>
-databricks bundle deploy -t dev --profile <profile>
-```
+| Path | Purpose |
+|---|---|
+| `databricks.yml` | Bundle root: variables (catalog, thresholds, scoring settings) and the `dev` and `prod` targets |
+| `resources/` | Schemas, volumes, pipeline, jobs, dashboard |
+| `generator/` | Local scripts: reference fetch, formulary, simulator, uploads |
+| `src/pipeline/` | Bronze, silver, and gold pipeline code |
+| `src/scoring/`, `src/snapshot/`, `src/eval/` | Job tasks |
+| `src/governance/`, `sql/governance/` | Access table, ID mask, facility filter, reporting views |
+| `dashboards/` | Dashboard builder and generated JSON |
+| `docs/` | User guide, data dictionary, design notes |
+| `tests/` | Local tests (`uv run pytest`) |
