@@ -84,3 +84,52 @@ def test_review_list_is_a_table_for_export() -> None:
     review = [i["widget"] for _, i in widgets() if i["widget"]["name"] == "review_list_table"]
     assert review and review[0]["spec"]["widgetType"] == "table"
     assert "Excel" in review[0]["spec"]["frame"]["description"]
+
+
+# Keys every table column exported from the Databricks UI carries (table version 1). Missing keys, or a column type
+# the UI never writes (such as "date"), render as "Invalid widget definition".
+TABLE_COLUMN_KEYS = {
+    "fieldName",
+    "displayName",
+    "title",
+    "type",
+    "displayAs",
+    "visible",
+    "order",
+    "alignContent",
+    "allowSearch",
+    "allowHTML",
+    "highlightLinks",
+    "useMonospaceFont",
+    "preserveWhitespace",
+    "booleanValues",
+    "imageUrlTemplate",
+    "imageTitleTemplate",
+    "imageWidth",
+    "imageHeight",
+    "linkUrlTemplate",
+    "linkTextTemplate",
+    "linkTitleTemplate",
+    "linkOpenInNewTab",
+}
+TABLE_COLUMN_TYPES = {"string": "string", "integer": "number", "float": "number", "datetime": "datetime"}
+
+
+def test_table_columns_match_ui_export_format() -> None:
+    for _, item in widgets():
+        spec = item["widget"].get("spec", {})
+        if spec.get("widgetType") != "table":
+            continue
+        assert {"invisibleColumns", "allowHTMLByDefault", "paginationSize"} <= set(spec), item["widget"]["name"]
+        for col in spec["encodings"]["columns"]:
+            assert TABLE_COLUMN_KEYS <= set(col), (item["widget"]["name"], col["fieldName"])
+            assert TABLE_COLUMN_TYPES.get(col["type"]) == col["displayAs"], (item["widget"]["name"], col["fieldName"])
+
+
+def test_filter_queries_carry_associativity_field() -> None:
+    for _, item in widgets():
+        spec = item["widget"].get("spec", {})
+        if not spec.get("widgetType", "").startswith("filter-"):
+            continue
+        for q in item["widget"]["queries"]:
+            assert any(f["name"].endswith("_associativity") for f in q["query"]["fields"]), item["widget"]["name"]
