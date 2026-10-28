@@ -27,6 +27,32 @@ variables:
     description: Trailing days used for average daily usage and days on hand.
     default: 28
 
+  # Scoring (src/scoring), audit snapshot, and evaluation settings.
+  score_features:
+    description: Comma-separated gold.user_activity_monthly columns used in the score.
+    default: pulls_per_patient_day,waste_ratio,unwitnessed_waste_rate,median_minutes_to_waste,override_rate,cancel_rate,no_active_order_rate,pulls_after_patient_left_rate,witness_concentration
+  z_cap:
+    description: Each feature's positive z-score is capped at this value in the composite score.
+    default: 4
+  min_pulls:
+    description: A nurse-month needs at least this many pulls to be scored.
+    default: 20
+  min_wastes:
+    description: Waste features count only when the nurse-month has at least this many wastes.
+    default: 5
+  min_peers:
+    description: Fewest other eligible nurses needed to compute a z-score.
+    default: 3
+  reason_min_z:
+    description: A feature appears as a reason code when its z-score is at least this value.
+    default: 2
+  audit_fraction:
+    description: Share of scored nurses per month placed on the audit review list.
+    default: 0.10
+  top_k_fractions:
+    description: Comma-separated top-k fractions used for precision and recall.
+    default: "0.05,0.10"
+
 # Schema and volume names live in resources/schemas.yml and resources/volumes.yml.
 # Reference them as ${resources.schemas.<key>.name}. Dev and prod are separated by
 # the development-mode name prefix, not by a variable.
